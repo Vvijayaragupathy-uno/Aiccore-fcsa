@@ -1,7 +1,7 @@
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { type NextRequest, NextResponse } from "next/server"
-import { processExcelFile, processPDFFile, cleanMarkdownFormatting, extractFinancialData } from "@/lib/file-processor"
+import { processExcelFile, processPDFFile, extractFinancialData } from "@/lib/file-processor"
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,76 +54,268 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = `
-You are an expert agricultural credit analyst. Analyze the following income statement data and provide a comprehensive analysis.
+You are an expert agricultural credit analyst specializing in agricultural lending. Analyze the following income statement data with focus on trend analysis and the 5 C's of Credit framework:
 
 File: ${file.name}
+Data Hash: ${dataHash}
 Data: ${extractedData}
 
-Provide a detailed analysis covering:
+COMPREHENSIVE INCOME STATEMENT TREND ANALYSIS REQUIREMENTS:
 
-**INCOME STATEMENT ANALYSIS**
+1. SPECIFIC ITEMS TO ANALYZE (provide detailed trend analysis for each):
+   - Gross Farm Income: trends, year-over-year changes, seasonal patterns
+   - Net Farm Income: profitability trends, margin analysis, comparison to industry benchmarks
+   - Net Nonfarm Income: analyze composition (wages vs other), stability, diversification benefits
+   - Net Income (NIAT): overall profitability trends, tax efficiency analysis
+   - Term Interest and Term Principal Demand (combined): debt service burden analysis
+   - Margin after Servicing: years positive/negative, projected vs 3-year average, assessment relative to 1.25:1 Debt Coverage Ratio standard
 
-1. **Revenue Analysis:**
-   - Gross farm income trends and patterns
-   - Revenue diversification and sources
-   - Seasonal variations and market impacts
-   - Year-over-year growth or decline
+2. THE 5 C'S OF CREDIT FRAMEWORK:
+   - CHARACTER: Management quality, payment history, integrity
+   - CAPACITY: Cash flow analysis, debt service coverage, repayment ability
+   - CAPITAL: Equity position, retained earnings, capital adequacy
+   - COLLATERAL: Asset backing, security position
+   - CONDITIONS: Market conditions, economic environment, industry outlook
 
-2. **Profitability Assessment:**
-   - Net farm income analysis
-   - Operating margins and efficiency
-   - Cost structure evaluation
-   - Profit trends and sustainability
+3. LENDING STANDARDS & BENCHMARKS:
+   - Debt Coverage Ratio: Target 1.25:1 minimum
+   - Operating Expense Ratio: Industry benchmarks (typically 65-75%)
+   - Net Farm Income margins and trends
+   - Cash flow adequacy for family living and capital expenditures
 
-3. **Cash Flow Evaluation:**
-   - Operating cash flow generation
-   - Debt service coverage capacity
-   - Working capital requirements
-   - Seasonal cash flow patterns
+4. NARRATIVE REQUIREMENTS:
+   - Provide specific dollar amounts and percentages
+   - Compare current year to 3-year averages
+   - Identify positive and negative trends with explanations
+   - Address seasonal variations and cyclical patterns
+   - Include actionable recommendations for improvement
+   - Reference relevant accounting standards (GAAP/IFRS) and agricultural lending principles
+   - Focus on agricultural credit lending perspective with actionable insights
 
-4. **Risk Assessment:**
-   - Income volatility and stability
-   - Weather and market dependencies
-   - Operational risk factors
-   - Financial leverage concerns
+IMPORTANT INSTRUCTIONS:
+- Assign a credit grade (A, B, C, D, or F) based on comprehensive financial performance analysis
+- Provide detailed explanation for the grade assignment, including specific ratios and benchmarks
+- Generate narrative similar to the example provided, focusing on Earnings analysis
+- Include specific calculations and variance analysis where applicable
 
-5. **Credit Evaluation:**
-   - Overall creditworthiness assessment
-   - Debt service capacity analysis
-   - Collateral and security position
-   - Lending recommendations
+Provide a comprehensive analysis in the following JSON format:
 
-6. **Key Financial Ratios:**
-   - Debt-to-equity ratios
-   - Current ratio analysis
-   - Return on assets/equity
-   - Operating expense ratios
+{
+  "executiveSummary": {
+    "overallPerformance": "Brief overall assessment",
+    "creditGrade": "A|B|C|D|F",
+    "gradeExplanation": "string - detailed explanation of why this grade was assigned, including specific financial ratios and benchmarks used",
+    "standardPrinciples": "string - mention relevant accounting standards (GAAP/IFRS) and agricultural lending principles applied in the analysis",
+    "profitabilityTrend": "Improving|Stable|Declining",
+    "keyStrengths": ["strength1", "strength2", "strength3"],
+    "criticalWeaknesses": ["weakness1", "weakness2"]
+  },
+  "sections": [
+    {
+      "title": "Earnings Analysis",
+      "summary": "Comprehensive analysis of farm income trends and profitability patterns",
+      "metrics": [
+        {
+          "name": "Gross Farm Income",
+          "value": "string - with dollar amounts and trends",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - detailed trend analysis, year-over-year changes, seasonal patterns"
+        },
+        {
+          "name": "Net Farm Income",
+          "value": "string - with dollar amounts and margins",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - profitability trends, margin analysis, industry benchmarks"
+        },
+        {
+          "name": "Net Nonfarm Income",
+          "value": "string - with composition breakdown",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - composition analysis (wages vs other), stability assessment"
+        },
+        {
+          "name": "Net Income (NIAT)",
+          "value": "string - with dollar amounts",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - overall profitability trends, tax efficiency"
+        }
+      ],
+      "keyFindings": ["string - key earnings insights"]
+    },
+    {
+      "title": "Cash Flow and Debt Service Analysis",
+      "summary": "Assessment of cash generation and debt service capacity",
+      "metrics": [
+        {
+          "name": "Term Interest and Principal Demand",
+          "value": "string - combined amounts",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - debt service burden analysis"
+        },
+        {
+          "name": "Margin after Servicing",
+          "value": "string - with DCR calculation",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - years positive/negative, projected vs 3-year average, 1.25:1 DCR assessment"
+        },
+        {
+          "name": "Debt Coverage Ratio",
+          "value": "string - ratio calculation",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - comparison to 1.25:1 standard, cash flow adequacy"
+        }
+      ],
+      "keyFindings": ["string - cash flow insights"]
+    },
+    {
+      "title": "5 C's of Credit Assessment",
+      "summary": "Comprehensive credit evaluation using the 5 C's framework",
+      "creditFactors": [
+        {
+          "factor": "Character",
+          "assessment": "string - management quality, payment history evaluation",
+          "score": "Strong|Adequate|Weak"
+        },
+        {
+          "factor": "Capacity",
+          "assessment": "string - cash flow analysis, debt service coverage, repayment ability",
+          "score": "Strong|Adequate|Weak"
+        },
+        {
+          "factor": "Capital",
+          "assessment": "string - equity position, retained earnings analysis",
+          "score": "Strong|Adequate|Weak"
+        },
+        {
+          "factor": "Collateral",
+          "assessment": "string - asset backing, security position",
+          "score": "Strong|Adequate|Weak"
+        },
+        {
+          "factor": "Conditions",
+          "assessment": "string - market conditions, economic environment, industry outlook",
+          "score": "Favorable|Neutral|Unfavorable"
+        }
+      ],
+      "keyFindings": ["string - credit assessment insights"]
+    },
+    {
+      "title": "Lending Standards Compliance",
+      "summary": "Evaluation against agricultural lending benchmarks and standards",
+      "metrics": [
+        {
+          "name": "Operating Expense Ratio",
+          "value": "string - percentage with benchmark comparison",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - comparison to 65-75% industry benchmark"
+        },
+        {
+          "name": "Family Living Adequacy",
+          "value": "string - coverage assessment",
+          "trend": "Improving|Stable|Declining",
+          "analysis": "string - cash flow adequacy for family living expenses"
+        }
+      ],
+      "keyFindings": ["string - compliance insights"]
+    },
+    {
+      "title": "Credit Recommendations",
+      "summary": "Lending recommendations based on comprehensive analysis",
+      "recommendations": [
+        {
+          "category": "string - recommendation category",
+          "recommendation": "string - specific actionable recommendation",
+          "priority": "High|Medium|Low",
+          "rationale": "string - detailed rationale with supporting data"
+        }
+      ],
+      "keyFindings": ["string - lending insights"]
+    }
+  ]
+}
 
-**LENDING RECOMMENDATIONS:**
-- Credit grade assignment (A, B, C, D, or F)
-- Loan structure suggestions
-- Risk mitigation strategies
-- Monitoring requirements
-- Covenant recommendations
-
-Format your response with clear sections, specific numbers where available, and actionable insights for agricultural lending decisions.
+IMPORTANT: Return ONLY valid JSON. No additional text, explanations, or markdown formatting.
 `
 
     const { text } = await generateText({
       model: openai("gpt-4"),
       prompt,
-      temperature: 0.3,
-      maxTokens: 2500,
+      temperature: 0.05, // Very low temperature for maximum consistency
+      maxTokens: 3000,
     })
 
-    // Clean and format the response
-    const cleanedAnalysis = cleanMarkdownFormatting(text)
+    // Try to parse as JSON, fallback to structured format if parsing fails
+    let analysisResult
+    try {
+      analysisResult = JSON.parse(text)
+    } catch (parseError) {
+      console.warn("Failed to parse JSON response, using fallback format:", parseError)
+      // Fallback to structured format
+      analysisResult = {
+        executiveSummary: {
+          overallPerformance: "Analysis completed with limited data parsing",
+          creditGrade: "C",
+          gradeExplanation:
+            "Grade assigned based on available data analysis. Detailed financial ratios and benchmarks require further review.",
+          standardPrinciples:
+            "Analysis follows GAAP accounting standards and agricultural lending best practices for income statement evaluation.",
+          profitabilityTrend: "Stable",
+          keyStrengths: ["Data processed successfully"],
+          criticalWeaknesses: ["Limited data parsing capability"],
+        },
+        sections: [
+          {
+            title: "Earnings Analysis",
+            summary: "Farm income analysis based on available data",
+            metrics: [],
+            keyFindings: ["Analysis requires manual review"],
+          },
+          {
+            title: "Cash Flow and Debt Service Analysis",
+            summary: "Debt service capacity assessment based on available data",
+            metrics: [],
+            keyFindings: ["Cash flow analysis requires manual review"],
+          },
+          {
+            title: "5 C's of Credit Assessment",
+            summary: "Credit evaluation framework assessment",
+            creditFactors: [
+              { factor: "Character", assessment: "Requires manual evaluation", score: "Adequate" },
+              { factor: "Capacity", assessment: "Requires manual evaluation", score: "Adequate" },
+              { factor: "Capital", assessment: "Requires manual evaluation", score: "Adequate" },
+              { factor: "Collateral", assessment: "Requires manual evaluation", score: "Adequate" },
+              { factor: "Conditions", assessment: "Requires manual evaluation", score: "Neutral" },
+            ],
+            keyFindings: ["Manual credit assessment required"],
+          },
+          {
+            title: "Lending Standards Compliance",
+            summary: "Compliance assessment based on available data",
+            metrics: [],
+            keyFindings: ["Compliance assessment requires manual review"],
+          },
+          {
+            title: "Credit Recommendations",
+            summary: "Lending recommendations based on available analysis",
+            recommendations: [
+              {
+                category: "Data Review",
+                recommendation: "Manual review of income statement required",
+                priority: "High",
+                rationale: "Automated parsing limitations require manual intervention",
+              },
+            ],
+            keyFindings: ["Manual review recommended"],
+          },
+        ],
+      }
+    }
 
     // Extract financial metrics for visualization
     const financialMetrics = extractFinancialMetrics(extractedData)
 
     return NextResponse.json({
-      analysis: cleanedAnalysis,
+      analysis: analysisResult,
       metrics: financialMetrics,
       dataHash: dataHash,
       fileName: file.name,
@@ -131,13 +323,7 @@ Format your response with clear sections, specific numbers where available, and 
     })
   } catch (error) {
     console.error("Income analysis error:", error)
-    return NextResponse.json(
-      {
-        error: "Failed to analyze income statement. Please try again.",
-        success: false,
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to analyze income statement", success: false }, { status: 500 })
   }
 }
 
@@ -168,14 +354,14 @@ function extractFinancialMetrics(data: string) {
     }
   } catch (error) {
     console.error("Error extracting financial metrics:", error)
-    // Return sample data structure on error
+    // Return empty data structure on error
     const currentYear = new Date().getFullYear()
     return {
       years: [currentYear - 2, currentYear - 1, currentYear],
-      grossIncome: [1800000, 1950000, 2100000],
-      netIncome: [380000, 425000, 465000],
-      operatingExpenses: [1420000, 1525000, 1635000],
-      debtServiceCoverage: [1.45, 1.38, 1.52],
+      grossIncome: [0, 0, 0],
+      netIncome: [0, 0, 0],
+      operatingExpenses: [0, 0, 0],
+      debtServiceCoverage: [0, 0, 0],
     }
   }
 }

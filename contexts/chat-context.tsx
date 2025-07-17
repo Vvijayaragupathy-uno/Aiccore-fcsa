@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useCallback } from "react"
 
 export interface ChatMessage {
   id: string
-  type: "analysis" | "question" | "response"
+  type: "question" | "response" | "analysis"
   content: string
   timestamp: Date
 }
@@ -15,8 +15,9 @@ export interface ChatSession {
   fileName: string
   fileHash: string
   analysisType: "income_statement" | "balance_sheet" | "combined"
-  createdAt: Date
   messages: ChatMessage[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface ChatContextType {
@@ -36,54 +37,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
 
-  // Load sessions from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedSessions = localStorage.getItem("chat-sessions")
-      if (savedSessions) {
-        const parsed = JSON.parse(savedSessions)
-        // Convert date strings back to Date objects
-        const sessionsWithDates = parsed.map((session: any) => ({
-          ...session,
-          createdAt: new Date(session.createdAt),
-          messages: session.messages.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
-        }))
-        setSessions(sessionsWithDates)
+  const createSession = useCallback(
+    (fileName: string, fileHash: string, analysisType: ChatSession["analysisType"]): string => {
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const newSession: ChatSession = {
+        id: sessionId,
+        fileName,
+        fileHash,
+        analysisType,
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
-    } catch (error) {
-      console.error("Error loading chat sessions:", error)
-    }
-  }, [])
 
-  // Save sessions to localStorage whenever sessions change
-  useEffect(() => {
-    try {
-      localStorage.setItem("chat-sessions", JSON.stringify(sessions))
-    } catch (error) {
-      console.error("Error saving chat sessions:", error)
-    }
-  }, [sessions])
+      setSessions((prev) => [...prev, newSession])
+      setCurrentSessionId(sessionId)
+      return sessionId
+    },
+    [],
+  )
 
-  const createSession = (fileName: string, fileHash: string, analysisType: ChatSession["analysisType"]): string => {
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newSession: ChatSession = {
-      id: sessionId,
-      fileName,
-      fileHash,
-      analysisType,
-      createdAt: new Date(),
-      messages: [],
-    }
-
-    setSessions((prev) => [...prev, newSession])
-    setCurrentSessionId(sessionId)
-    return sessionId
-  }
-
-  const addMessage = (sessionId: string, message: Omit<ChatMessage, "id" | "timestamp">) => {
+  const addMessage = useCallback((sessionId: string, message: Omit<ChatMessage, "id" | "timestamp">) => {
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const fullMessage: ChatMessage = {
       ...message,
@@ -93,48 +67,52 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     setSessions((prev) =>
       prev.map((session) =>
-        session.id === sessionId ? { ...session, messages: [...session.messages, fullMessage] } : session,
+        session.id === sessionId
+          ? {
+              ...session,
+              messages: [...session.messages, fullMessage],
+              updatedAt: new Date(),
+            }
+          : session,
       ),
     )
-  }
+  }, [])
 
-  const getSession = (sessionId: string): ChatSession | undefined => {
-    return sessions.find((session) => session.id === sessionId)
-  }
+  const getSession = useCallback(
+    (sessionId: string): ChatSession | undefined => {
+      return sessions.find((session) => session.id === sessionId)
+    },
+    [sessions],
+  )
 
-  const getSessionByFileHash = (
-    fileHash: string,
-    analysisType: ChatSession["analysisType"],
-  ): ChatSession | undefined => {
-    return sessions.find((session) => session.fileHash === fileHash && session.analysisType === analysisType)
-  }
+  const getSessionByFileHash = useCallback(
+    (fileHash: string, analysisType: ChatSession["analysisType"]): ChatSession | undefined => {
+      return sessions.find((session) => session.fileHash === fileHash && session.analysisType === analysisType)
+    },
+    [sessions],
+  )
 
-  const setCurrentSession = (sessionId: string) => {
+  const setCurrentSession = useCallback((sessionId: string) => {
     setCurrentSessionId(sessionId)
-  }
+  }, [])
 
-  const clearSessions = () => {
+  const clearSessions = useCallback(() => {
     setSessions([])
     setCurrentSessionId(null)
-    localStorage.removeItem("chat-sessions")
+  }, [])
+
+  const value: ChatContextType = {
+    sessions,
+    currentSessionId,
+    createSession,
+    addMessage,
+    getSession,
+    getSessionByFileHash,
+    setCurrentSession,
+    clearSessions,
   }
 
-  return (
-    <ChatContext.Provider
-      value={{
-        sessions,
-        currentSessionId,
-        createSession,
-        addMessage,
-        getSession,
-        getSessionByFileHash,
-        setCurrentSession,
-        clearSessions,
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
-  )
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
 }
 
 export function useChatContext() {

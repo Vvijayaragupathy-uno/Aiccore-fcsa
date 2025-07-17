@@ -2,60 +2,67 @@ export function formatMarkdown(text: string): string {
   if (!text) return ""
 
   return text
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
-    .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
-    .replace(/^### (.*$)/gm, "<h3>$1</h3>") // H3 headers
-    .replace(/^## (.*$)/gm, "<h2>$1</h2>") // H2 headers
-    .replace(/^# (.*$)/gm, "<h1>$1</h1>") // H1 headers
-    .replace(/^\* (.*$)/gm, "<li>$1</li>") // List items
-    .replace(/^- (.*$)/gm, "<li>$1</li>") // List items
-    .replace(/^\d+\. (.*$)/gm, "<li>$1</li>") // Numbered list items
-    .replace(/\n\n/g, "</p><p>") // Paragraphs
-    .replace(/^(?!<[h|l])/gm, "<p>") // Start paragraphs
-    .replace(/(?<![>])$/gm, "</p>") // End paragraphs
-    .replace(/<p><\/p>/g, "") // Remove empty paragraphs
-    .replace(/<p>(<h[1-6]>)/g, "$1") // Fix headers in paragraphs
-    .replace(/(<\/h[1-6]>)<\/p>/g, "$1") // Fix headers in paragraphs
-    .replace(/<p>(<li>)/g, "<ul>$1") // Start lists
-    .replace(/(<\/li>)<\/p>/g, "$1</ul>") // End lists
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br>")
+    .replace(/^/, "<p>")
+    .replace(/$/, "</p>")
 }
 
-export function extractAndFormatMetrics(text: string): any[] {
-  // Extract key metrics from analysis text
-  const metrics = []
+export function extractAndFormatMetrics(text: string): Array<{
+  label: string
+  value: string
+  trend?: "up" | "down" | "stable"
+}> {
+  const metrics: Array<{ label: string; value: string; trend?: "up" | "down" | "stable" }> = []
+
+  // Extract common financial metrics
   const lines = text.split("\n")
 
-  for (const line of lines) {
-    // Look for ratio patterns
-    const ratioMatch = line.match(/(\w+\s+ratio|coverage|margin):\s*([\d.]+)/i)
-    if (ratioMatch) {
-      metrics.push({
-        name: ratioMatch[1],
-        value: ratioMatch[2],
-        type: "ratio",
-      })
+  lines.forEach((line) => {
+    // Look for currency amounts
+    const currencyMatch = line.match(/\$[\d,]+/)
+    if (currencyMatch) {
+      const label = line.replace(currencyMatch[0], "").trim().replace(/[:-]/g, "").trim()
+      if (label && label.length > 3) {
+        metrics.push({
+          label: label.substring(0, 50), // Limit length
+          value: currencyMatch[0],
+        })
+      }
     }
 
-    // Look for percentage patterns
-    const percentMatch = line.match(/(\w+):\s*([\d.]+)%/i)
+    // Look for percentages
+    const percentMatch = line.match(/\d+\.?\d*%/)
     if (percentMatch) {
-      metrics.push({
-        name: percentMatch[1],
-        value: percentMatch[2] + "%",
-        type: "percentage",
-      })
+      const label = line.replace(percentMatch[0], "").trim().replace(/[:-]/g, "").trim()
+      if (label && label.length > 3) {
+        metrics.push({
+          label: label.substring(0, 50),
+          value: percentMatch[0],
+        })
+      }
     }
 
-    // Look for dollar amounts
-    const dollarMatch = line.match(/(\w+):\s*\$?([\d,]+)/i)
-    if (dollarMatch) {
-      metrics.push({
-        name: dollarMatch[1],
-        value: "$" + dollarMatch[2],
-        type: "currency",
-      })
+    // Look for ratios
+    const ratioMatch = line.match(/\d+\.?\d*:\d+\.?\d*/)
+    if (ratioMatch) {
+      const label = line.replace(ratioMatch[0], "").trim().replace(/[:-]/g, "").trim()
+      if (label && label.length > 3) {
+        metrics.push({
+          label: label.substring(0, 50),
+          value: ratioMatch[0],
+        })
+      }
     }
-  }
+  })
 
-  return metrics
+  // Remove duplicates and limit to top 10
+  const uniqueMetrics = metrics
+    .filter((metric, index, self) => index === self.findIndex((m) => m.label === metric.label))
+    .slice(0, 10)
+
+  return uniqueMetrics
 }
