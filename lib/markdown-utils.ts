@@ -8,17 +8,27 @@ export function formatMarkdown(text: string): string {
       // Convert *italic* to <em>
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
       // Convert `code` to <code>
-      .replace(/`(.*?)`/g, "<code>$1</code>")
-      // Convert line breaks
-      .replace(/\n/g, "<br>")
-      // Convert bullet points
-      .replace(/^\s*[-*+]\s(.+)$/gm, "<li>$1</li>")
-      // Wrap lists
-      .replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
       // Convert headers
       .replace(/^### (.*$)/gm, "<h3>$1</h3>")
       .replace(/^## (.*$)/gm, "<h2>$1</h2>")
       .replace(/^# (.*$)/gm, "<h1>$1</h1>")
+      // Convert bullet points
+      .replace(/^\* (.*$)/gm, "<li>$1</li>")
+      .replace(/^- (.*$)/gm, "<li>$1</li>")
+      // Convert numbered lists
+      .replace(/^\d+\. (.*$)/gm, "<li>$1</li>")
+      // Convert line breaks
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/\n/g, "<br>")
+      // Wrap in paragraphs
+      .replace(/^(.)/gm, "<p>$1")
+      .replace(/(.)$/gm, "$1</p>")
+      // Clean up list formatting
+      .replace(/<p><li>/g, "<ul><li>")
+      .replace(/<\/li><\/p>/g, "</li></ul>")
+      // Clean up multiple paragraph tags
+      .replace(/<\/p><p>/g, "</p>\n<p>")
   )
 }
 
@@ -270,4 +280,41 @@ export function parseJsonSafely(text: string): any {
   } catch {
     return text
   }
+}
+
+export function stripMarkdown(text: string): string {
+  if (!text) return ""
+
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold
+    .replace(/\*(.*?)\*/g, "$1") // Remove italic
+    .replace(/`([^`]+)`/g, "$1") // Remove code
+    .replace(/^#{1,6}\s/gm, "") // Remove headers
+    .replace(/^\* /gm, "") // Remove bullet points
+    .replace(/^- /gm, "") // Remove bullet points
+    .replace(/^\d+\. /gm, "") // Remove numbered lists
+    .replace(/\[([^\]]+)\]$$[^)]+$$/g, "$1") // Remove links
+    .trim()
+}
+
+export function truncateText(text: string, maxLength = 200): string {
+  if (!text || text.length <= maxLength) return text
+
+  const truncated = text.substring(0, maxLength)
+  const lastSpace = truncated.lastIndexOf(" ")
+
+  if (lastSpace > maxLength * 0.8) {
+    return truncated.substring(0, lastSpace) + "..."
+  }
+
+  return truncated + "..."
+}
+
+export function extractSummary(text: string, sentences = 2): string {
+  if (!text) return ""
+
+  const sentenceEnders = /[.!?]+/g
+  const sentenceArray = text.split(sentenceEnders).filter((s) => s.trim().length > 0)
+
+  return sentenceArray.slice(0, sentences).join(". ") + (sentenceArray.length > sentences ? "." : "")
 }
