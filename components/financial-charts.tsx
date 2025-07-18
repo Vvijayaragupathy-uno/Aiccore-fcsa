@@ -309,7 +309,7 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
                       <span className="text-sm font-medium">Gross Income</span>
                       <TrendIcon trend={grossIncomeTrend} />
                     </div>
-                    <div className="text-lg font-bold">{formatCurrency(currentYear.grossFarmIncome)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(currentYear.grossFarmIncome!)}</div>
                   </div>
                 )}
               </div>
@@ -381,7 +381,7 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
 
             <div className="p-4 bg-blue-50 rounded-lg">
               <h4 className="font-medium text-sm mb-2">Total Assets</h4>
-              <div className="text-2xl font-bold text-blue-600">{formatCurrency(currentYear.totalAssets)}</div>
+              <div className="text-2xl font-bold text-blue-600">{formatCurrency(currentYear.totalAssets || 0)}</div>
             </div>
           </CardContent>
         </Card>
