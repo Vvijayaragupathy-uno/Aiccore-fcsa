@@ -7,21 +7,22 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, Send, Loader2, FileText, Target, Download } from "lucide-react"
+import { Upload, Send, Loader2, TrendingUp, DollarSign, AlertTriangle, BarChart3, Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { FinancialCharts } from "@/components/financial-charts"
 import { useToast } from "@/hooks/use-toast"
 import { formatMarkdown } from "@/lib/markdown-utils"
 import { useChatContext } from "@/contexts/chat-context"
-import { ChatHistory } from "@/components/chat-history"
+import { ChatHistory, ChatMessages } from "@/components/chat-history"
 import { createFileFingerprint } from "@/lib/file-processor"
 
 // Function to format combined analysis into structured sections
 function formatCombinedAnalysis(analysis: any) {
   if (!analysis) return null
 
-  // Handle string format (try to parse as JSON first)
+  // Handle both old text format and new JSON format
   if (typeof analysis === "string") {
     try {
       const parsedAnalysis = JSON.parse(analysis)
@@ -48,7 +49,7 @@ function formatCombinedAnalysis(analysis: any) {
             return (
               <div key={index} className="bg-white border rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded-full mr-3">
+                  <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full mr-3">
                     {index + 1}
                   </span>
                   {title}
@@ -60,7 +61,7 @@ function formatCombinedAnalysis(analysis: any) {
                       if (!point.trim()) return null
                       return (
                         <div key={pointIndex} className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                           <p className="text-gray-700 leading-relaxed">{point.trim()}</p>
                         </div>
                       )
@@ -77,14 +78,14 @@ function formatCombinedAnalysis(analysis: any) {
     }
   }
 
-  // Handle JSON format
+  // New JSON format - same structure as income statement but with blue theme
   return (
     <div className="space-y-6">
       {/* Executive Summary */}
       {analysis.executiveSummary && (
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <span className="bg-purple-600 text-white text-sm font-medium px-3 py-1 rounded-full mr-3">
+            <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full mr-3">
               Executive Summary
             </span>
           </h3>
@@ -124,6 +125,58 @@ function formatCombinedAnalysis(analysis: any) {
             </div>
           )}
 
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            {analysis.executiveSummary.profitabilityTrend && (
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Profitability Trend</h4>
+                <span
+                  className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                    analysis.executiveSummary.profitabilityTrend === "Improving"
+                      ? "bg-green-100 text-green-800"
+                      : analysis.executiveSummary.profitabilityTrend === "Stable"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {analysis.executiveSummary.profitabilityTrend}
+                </span>
+              </div>
+            )}
+            {analysis.executiveSummary.riskLevel && (
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Risk Level</h4>
+                <span
+                  className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                    analysis.executiveSummary.riskLevel === "Low"
+                      ? "bg-green-100 text-green-800"
+                      : analysis.executiveSummary.riskLevel === "Medium"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {analysis.executiveSummary.riskLevel}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {analysis.executiveSummary.creditRecommendation && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Credit Recommendation</h4>
+              <span
+                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                  analysis.executiveSummary.creditRecommendation === "Approve"
+                    ? "bg-green-100 text-green-800"
+                    : analysis.executiveSummary.creditRecommendation === "Conditional"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                }`}
+              >
+                {analysis.executiveSummary.creditRecommendation}
+              </span>
+            </div>
+          )}
+
           {analysis.executiveSummary.keyStrengths?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-2">Key Strengths</h4>
@@ -139,7 +192,7 @@ function formatCombinedAnalysis(analysis: any) {
           )}
 
           {analysis.executiveSummary.criticalWeaknesses?.length > 0 && (
-            <div className="mb-4">
+            <div>
               <h4 className="font-semibold text-gray-800 mb-2">Critical Weaknesses</h4>
               <ul className="space-y-2">
                 {analysis.executiveSummary.criticalWeaknesses.map((weakness: string, index: number) => (
@@ -151,37 +204,6 @@ function formatCombinedAnalysis(analysis: any) {
               </ul>
             </div>
           )}
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Risk Level</h4>
-              <span
-                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                  analysis.executiveSummary.riskLevel === "Low"
-                    ? "bg-green-100 text-green-800"
-                    : analysis.executiveSummary.riskLevel === "Medium"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
-                }`}
-              >
-                {analysis.executiveSummary.riskLevel}
-              </span>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Credit Recommendation</h4>
-              <span
-                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                  analysis.executiveSummary.creditRecommendation === "Approve"
-                    ? "bg-green-100 text-green-800"
-                    : analysis.executiveSummary.creditRecommendation === "Conditional"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
-                }`}
-              >
-                {analysis.executiveSummary.creditRecommendation}
-              </span>
-            </div>
-          </div>
         </div>
       )}
 
@@ -189,7 +211,7 @@ function formatCombinedAnalysis(analysis: any) {
       {analysis.sections?.map((section: any, index: number) => (
         <div key={index} className="bg-white border rounded-lg p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded-full mr-3">
+            <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full mr-3">
               {index + 1}
             </span>
             {section.title}
@@ -217,13 +239,13 @@ function formatCombinedAnalysis(analysis: any) {
                 {section.metrics.map((metric: any, metricIndex: number) => (
                   <div key={metricIndex} className="bg-gray-50 rounded-lg p-4 border">
                     <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium text-gray-900">{metric.name || metric.metric}</h5>
+                      <h5 className="font-medium text-gray-900">{metric.name}</h5>
                       {metric.trend && (
                         <span
                           className={`text-sm px-2 py-1 rounded ${
-                            metric.trend === "Improving" || metric.trend === "improving"
+                            metric.trend === "Improving"
                               ? "bg-green-100 text-green-700"
-                              : metric.trend === "Declining" || metric.trend === "declining"
+                              : metric.trend === "Declining"
                                 ? "bg-red-100 text-red-700"
                                 : "bg-gray-100 text-gray-700"
                           }`}
@@ -232,10 +254,7 @@ function formatCombinedAnalysis(analysis: any) {
                         </span>
                       )}
                     </div>
-                    {metric.value && <p className="text-lg font-semibold text-purple-600 mb-2">{metric.value}</p>}
-                    {metric.currentValue && (
-                      <p className="text-lg font-semibold text-purple-600 mb-2">{metric.currentValue}</p>
-                    )}
+                    {metric.value && <p className="text-lg font-semibold text-blue-600 mb-2">{metric.value}</p>}
                     {metric.analysis && <p className="text-sm text-gray-600 leading-relaxed">{metric.analysis}</p>}
                   </div>
                 ))}
@@ -318,9 +337,9 @@ function formatCombinedAnalysis(analysis: any) {
               <h4 className="font-semibold text-gray-800 mb-3">Recommendations</h4>
               <div className="space-y-3">
                 {section.recommendations.map((rec: any, recIndex: number) => (
-                  <div key={recIndex} className="border-l-4 border-purple-500 pl-4 bg-purple-50 p-4 rounded-r-lg">
+                  <div key={recIndex} className="border-l-4 border-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg">
                     <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium text-gray-900">{rec.category || rec.title}</h5>
+                      <h5 className="font-medium text-gray-900">{rec.category}</h5>
                       {rec.priority && (
                         <span
                           className={`text-xs px-2 py-1 rounded ${
@@ -335,7 +354,7 @@ function formatCombinedAnalysis(analysis: any) {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-700 mb-2 leading-relaxed">{rec.recommendation || rec.description}</p>
+                    <p className="text-gray-700 mb-2 leading-relaxed">{rec.recommendation}</p>
                     {rec.rationale && (
                       <p className="text-sm text-gray-600 mb-2">
                         <strong>Rationale:</strong> {rec.rationale}
@@ -358,17 +377,15 @@ function formatCombinedAnalysis(analysis: any) {
               <h4 className="font-semibold text-gray-800 mb-3">Monitoring Requirements</h4>
               <div className="grid md:grid-cols-1 gap-4">
                 {section.monitoringRequirements.map((monitor: any, monitorIndex: number) => (
-                  <div key={monitorIndex} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div key={monitorIndex} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h5 className="font-medium text-purple-900">{monitor.metric}</h5>
-                      <span className="text-sm px-2 py-1 bg-purple-100 text-purple-800 rounded">
-                        {monitor.frequency}
-                      </span>
+                      <h5 className="font-medium text-blue-900">{monitor.metric}</h5>
+                      <span className="text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded">{monitor.frequency}</span>
                     </div>
-                    <p className="text-sm text-purple-700 mb-1">
+                    <p className="text-sm text-blue-700 mb-1">
                       <strong>Threshold:</strong> {monitor.threshold}
                     </p>
-                    <p className="text-sm text-purple-600">
+                    <p className="text-sm text-blue-600">
                       <strong>Action:</strong> {monitor.action}
                     </p>
                   </div>
@@ -384,7 +401,7 @@ function formatCombinedAnalysis(analysis: any) {
               <ul className="space-y-2">
                 {section.keyFindings.map((finding: string, findingIndex: number) => (
                   <li key={findingIndex} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                     <span className="text-gray-700 leading-relaxed">{finding}</span>
                   </li>
                 ))}
@@ -402,110 +419,71 @@ export function CombinedAnalysis() {
   const [balanceFile, setBalanceFile] = useState<File | null>(null)
   const [analysis, setAnalysis] = useState("")
   const [followUpQuestion, setFollowUpQuestion] = useState("")
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isAsking, setIsAsking] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [analysisProgress, setAnalysisProgress] = useState(0)
   const [followUpResponse, setFollowUpResponse] = useState("")
   const [financialData, setFinancialData] = useState<any[]>([])
-  const [analysisProgress, setAnalysisProgress] = useState(0)
-  const [progressMessage, setProgressMessage] = useState("")
   const [fileHash, setFileHash] = useState<string>("")
-  const [showChatHistory, setShowChatHistory] = useState(false)
   const { toast } = useToast()
-  const {
-    createSession,
-    addMessage,
-    getSessionByFileHash,
-    currentSession: currentSessionId,
-    setCurrentSession,
-  } = useChatContext()
+  const { createSession, addMessage, getSessionByFileHash, currentSessionId, setCurrentSession, getSession } =
+    useChatContext()
 
-  const validateFile = (file: File) => {
-    const validTypes = [".xlsx", ".xls", ".pdf"]
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."))
-
-    if (!validTypes.includes(fileExtension)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload Excel (.xlsx, .xls) or PDF files only.",
-        variant: "destructive",
-      })
-      return false
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload files smaller than 10MB.",
-        variant: "destructive",
-      })
-      return false
-    }
-
-    return true
-  }
-
-  const handleIncomeFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: "income" | "balance") => {
     const uploadedFile = event.target.files?.[0]
-    if (uploadedFile && validateFile(uploadedFile)) {
-      setIncomeFile(uploadedFile)
+    if (uploadedFile) {
+      // Validate file type
+      const validTypes = [".xlsx", ".xls", ".pdf"]
+      const fileExtension = uploadedFile.name.toLowerCase().substring(uploadedFile.name.lastIndexOf("."))
+
+      if (!validTypes.includes(fileExtension)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload Excel (.xlsx, .xls) or PDF files only.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validate file size (max 10MB)
+      if (uploadedFile.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload files smaller than 10MB.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (type === "income") {
+        setIncomeFile(uploadedFile)
+      } else {
+        setBalanceFile(uploadedFile)
+      }
+
       toast({
-        title: "Income statement uploaded",
+        title: "File uploaded",
         description: `${uploadedFile.name} is ready for analysis.`,
       })
     }
   }
 
-  const handleBalanceFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFile = event.target.files?.[0]
-    if (uploadedFile && validateFile(uploadedFile)) {
-      setBalanceFile(uploadedFile)
-      toast({
-        title: "Balance sheet uploaded",
-        description: `${uploadedFile.name} is ready for analysis.`,
-      })
-    }
-  }
-
-  const analyzeCombined = async () => {
+  const handleAnalyze = async () => {
     if (!incomeFile || !balanceFile) return
 
     setIsAnalyzing(true)
     setAnalysisProgress(0)
+    setAnalysis("")
+    setFollowUpResponse("")
+    setFinancialData([])
 
     try {
-      // Create file hash for session management
-      const combinedHash = (await createFileFingerprint(incomeFile)) + (await createFileFingerprint(balanceFile))
-      setFileHash(combinedHash)
-
-      // Check for existing session or create new one
-      let sessionId = currentSessionId
-      const existingSession = getSessionByFileHash(combinedHash, "combined")
-      if (existingSession) {
-        sessionId = existingSession.id
-        setCurrentSession(sessionId)
-      } else {
-        sessionId = createSession(`${incomeFile.name} + ${balanceFile.name}`, combinedHash, "combined")
-      }
-
-      // Enhanced progress updates with detailed steps
-      const progressSteps = [
-        { progress: 15, message: "Processing income statement data..." },
-        { progress: 30, message: "Processing balance sheet data..." },
-        { progress: 45, message: "Analyzing financial ratios and trends..." },
-        { progress: 60, message: "Evaluating credit risk factors..." },
-        { progress: 75, message: "Generating comprehensive insights..." },
-        { progress: 90, message: "Finalizing analysis report..." },
-      ]
-
-      let stepIndex = 0
+      // Simulate progress updates
       const progressInterval = setInterval(() => {
-        if (stepIndex < progressSteps.length) {
-          setAnalysisProgress(progressSteps[stepIndex].progress)
-          setProgressMessage(progressSteps[stepIndex].message)
-          stepIndex++
-        }
-      }, 800)
+        setAnalysisProgress((prev) => Math.min(prev + 10, 90))
+      }, 500)
 
       const formData = new FormData()
       formData.append("incomeFile", incomeFile)
@@ -518,63 +496,63 @@ export function CombinedAnalysis() {
 
       clearInterval(progressInterval)
       setAnalysisProgress(100)
-      setProgressMessage("Analysis complete!")
 
-      const result = await response.json()
-
-      if (result.success) {
-        setAnalysis(result.analysis)
-
-        // Add analysis to chat history
-        addMessage(sessionId, {
-          type: "analysis",
-          content: result.analysis,
-        })
-
-        if (result.metrics) {
-          const data = result.metrics.years.map((year: number, index: number) => ({
-            year,
-            grossFarmIncome: result.metrics.grossFarmIncome[index],
-            netFarmIncome: result.metrics.netFarmIncome[index],
-            netNonfarmIncome: result.metrics.netNonfarmIncome[index],
-            netIncome: result.metrics.netIncome[index],
-            currentAssets: result.metrics.currentAssets[index],
-            currentLiabilities: result.metrics.currentLiabilities[index],
-            totalAssets: result.metrics.totalAssets[index],
-            totalEquity: result.metrics.totalEquity[index],
-            termDebt: result.metrics.termDebt[index],
-          }))
-          setFinancialData(data)
-        }
-
-        toast({
-          title: "Comprehensive analysis complete",
-          description: "GPT-4 has analyzed both financial statements.",
-        })
-      } else {
-        throw new Error(result.error)
+      if (!response.ok) {
+        throw new Error("Failed to analyze financial statements")
       }
+
+      const data = await response.json()
+      const analysisData = data.analysis
+      setAnalysis(analysisData)
+
+      if (data.metrics) {
+        setFinancialData(data.metrics)
+      }
+
+      // Create file hash for session management
+      const combinedHash = await createFileFingerprint(
+        new File([incomeFile.name + balanceFile.name], "combined", { type: "text/plain" }),
+      )
+      setFileHash(combinedHash)
+
+      // Create or update session with analysis
+      let sessionId = currentSessionId
+      if (!sessionId) {
+        sessionId = createSession(`${incomeFile.name} + ${balanceFile.name}`, combinedHash, "combined")
+      }
+
+      // Add analysis to chat history
+      addMessage(sessionId, {
+        type: "analysis",
+        content: typeof analysisData === "string" ? analysisData : JSON.stringify(analysisData),
+      })
+
+      // Generate follow-up questions after analysis
+      await generateFollowUpQuestions(typeof analysisData === "string" ? analysisData : JSON.stringify(analysisData))
     } catch (error) {
+      console.error("Analysis error:", error)
       toast({
         title: "Analysis failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: "There was an error analyzing the financial statements. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setIsAnalyzing(false)
     }
-
-    setIsAnalyzing(false)
-    setAnalysisProgress(0)
   }
 
-  const askFollowUp = async () => {
-    const questionToAsk = followUpQuestion.trim()
+  const handleAskQuestion = async (question?: string) => {
+    const questionToAsk = question || followUpQuestion.trim()
     if (!questionToAsk || !currentSessionId) return
 
     setIsAsking(true)
     setFollowUpResponse("")
 
+    if (question) {
+      setFollowUpQuestion(question)
+    }
+
     try {
-      // Add question to chat history
       addMessage(currentSessionId, {
         type: "question",
         content: questionToAsk,
@@ -592,78 +570,92 @@ export function CombinedAnalysis() {
         }),
       })
 
-      const result = await response.json()
+      if (!response.ok) {
+        throw new Error("Failed to get response")
+      }
 
-      if (result.success) {
-        setFollowUpResponse(result.response)
+      const data = await response.json()
+      const formattedResponse = formatMarkdown(data.response)
+      setFollowUpResponse(formattedResponse)
 
-        // Add response to chat history
-        addMessage(currentSessionId, {
-          type: "response",
-          content: result.response,
-        })
+      addMessage(currentSessionId, {
+        type: "response",
+        content: formattedResponse,
+      })
 
-        toast({
-          title: "Question answered",
-          description: "GPT-4 has provided comprehensive insights.",
-        })
-      } else {
-        throw new Error(result.error)
+      if (!question) {
+        setFollowUpQuestion("")
       }
     } catch (error) {
+      console.error("Error asking question:", error)
       toast({
-        title: "Question failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        title: "Error",
+        description: "Failed to get a response. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setIsAsking(false)
     }
-
-    setIsAsking(false)
   }
 
   const exportReport = async () => {
-    setIsExporting(true)
+    if (!analysis) return
 
+    setIsExporting(true)
     try {
-      const response = await fetch("/api/export-report", {
+      const blob = new Blob([analysis], { type: "text/markdown" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "combined-financial-analysis-report.md"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      toast({
+        title: "Report exported",
+        description: "The combined financial analysis report has been downloaded.",
+      })
+    } catch (error) {
+      console.error("Error exporting report:", error)
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the report.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const generateFollowUpQuestions = async (analysisText: string) => {
+    try {
+      const response = await fetch("/api/generate-questions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          analysis,
-          metrics: financialData,
-          reportType: "Comprehensive Financial Analysis",
+          analysis: analysisText,
+          analysisType: "combined",
         }),
       })
 
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = `comprehensive-analysis-report-${new Date().toISOString().split("T")[0]}.pdf`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-
-        toast({
-          title: "Report exported",
-          description: "Comprehensive PDF report has been downloaded.",
-        })
-      } else {
-        throw new Error("Export failed")
+      if (!response.ok) {
+        throw new Error("Failed to generate follow-up questions")
       }
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      })
-    }
 
-    setIsExporting(false)
+      const data = await response.json()
+      setFollowUpQuestions(data.questions || [])
+    } catch (error) {
+      console.error("Error generating follow-up questions:", error)
+      setFollowUpQuestions([
+        "What are the key financial ratios?",
+        "How does the cash flow look?",
+        "What are the main risk factors?",
+      ])
+    }
   }
 
   const canAnalyze = incomeFile && balanceFile
@@ -682,68 +674,72 @@ export function CombinedAnalysis() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="income-combined">Income Statement (Excel or PDF, max 10MB)</Label>
-              <Input id="income-combined" type="file" accept=".xlsx,.xls,.pdf" onChange={handleIncomeFileUpload} />
-              {incomeFile && (
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant="secondary">{incomeFile.name}</Badge>
-                  <span className="text-xs text-gray-500">({(incomeFile.size / 1024 / 1024).toFixed(2)} MB)</span>
-                </div>
-              )}
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="income-file">Income Statement (Excel or PDF, max 10MB)</Label>
+                <Input
+                  id="income-file"
+                  type="file"
+                  accept=".xlsx,.xls,.pdf"
+                  onChange={(e) => handleFileUpload(e, "income")}
+                  className="mt-1"
+                />
+                {incomeFile && (
+                  <div className="mt-2 flex items-center space-x-2">
+                    <Badge variant="secondary">{incomeFile.name}</Badge>
+                    <span className="text-sm text-gray-500">({(incomeFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="balance-file">Balance Sheet (Excel or PDF, max 10MB)</Label>
+                <Input
+                  id="balance-file"
+                  type="file"
+                  accept=".xlsx,.xls,.pdf"
+                  onChange={(e) => handleFileUpload(e, "balance")}
+                  className="mt-1"
+                />
+                {balanceFile && (
+                  <div className="mt-2 flex items-center space-x-2">
+                    <Badge variant="secondary">{balanceFile.name}</Badge>
+                    <span className="text-sm text-gray-500">({(balanceFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="balance-combined">Balance Sheet (Excel or PDF, max 10MB)</Label>
-              <Input id="balance-combined" type="file" accept=".xlsx,.xls,.pdf" onChange={handleBalanceFileUpload} />
-              {balanceFile && (
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant="secondary">{balanceFile.name}</Badge>
-                  <span className="text-xs text-gray-500">({(balanceFile.size / 1024 / 1024).toFixed(2)} MB)</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {canAnalyze && (
-            <div className="mt-6">
-              <Button onClick={analyzeCombined} disabled={isAnalyzing} className="w-full" size="lg">
+            {incomeFile && balanceFile && (
+              <Button onClick={handleAnalyze} disabled={!incomeFile || !balanceFile || isAnalyzing} className="w-full">
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Performing Comprehensive GPT-4 Analysis...
+                    Analyzing with GPT-4...
                   </>
                 ) : (
                   <>
-                    <Target className="mr-2 h-4 w-4" />
-                    Analyze Combined Financial Position with AI
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Analyze Combined Statements with AI
                   </>
                 )}
               </Button>
-            </div>
-          )}
+            )}
+
+            {/* Progress Bar */}
+            {isAnalyzing && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Analyzing financial statements...</span>
+                  <span>{analysisProgress}%</span>
+                </div>
+                <Progress value={analysisProgress} className="w-full" />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
-
-      {/* Progress Indicator */}
-      {isAnalyzing && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span>{progressMessage || "Initializing comprehensive analysis..."}</span>
-                <span>{analysisProgress}%</span>
-              </div>
-              <Progress value={analysisProgress} className="w-full" />
-              <p className="text-xs text-muted-foreground">
-                Performing integrated financial analysis with GPT-4 to evaluate creditworthiness and lending
-                recommendations
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Analysis Results */}
       {analysis && (
@@ -751,8 +747,8 @@ export function CombinedAnalysis() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5" />
-                <span>GPT-4 Comprehensive Financial Analysis</span>
+                <DollarSign className="h-5 w-5" />
+                <span>GPT-4 Combined Financial Analysis</span>
               </CardTitle>
               <Button onClick={exportReport} disabled={isExporting} variant="outline">
                 {isExporting ? (
@@ -763,14 +759,11 @@ export function CombinedAnalysis() {
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Export PDF Report
+                    Export PDF
                   </>
                 )}
               </Button>
             </div>
-            <CardDescription>
-              Comprehensive integrated analysis of income statement and balance sheet with credit recommendations
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">{formatCombinedAnalysis(analysis)}</div>
@@ -778,15 +771,18 @@ export function CombinedAnalysis() {
         </Card>
       )}
 
-      {/* Financial Charts */}
+      {/* Data Visualization */}
       {financialData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Financial Trends Visualization</CardTitle>
-            <CardDescription>Interactive charts showing key financial metrics over time</CardDescription>
+            <CardTitle className="flex items-center space-x-2">
+              <BarChart3 className="h-5 w-5" />
+              <span>Financial Data Visualizations</span>
+            </CardTitle>
+            <CardDescription>Interactive charts and trend analysis based on your data</CardDescription>
           </CardHeader>
           <CardContent>
-            <FinancialCharts data={financialData} />
+            <FinancialCharts data={financialData} type="combined" />
           </CardContent>
         </Card>
       )}
@@ -796,30 +792,67 @@ export function CombinedAnalysis() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Send className="h-5 w-5" />
-              <span>Ask Follow-up Questions</span>
+              <AlertTriangle className="h-5 w-5" />
+              <span>AI Follow-up Analysis</span>
             </CardTitle>
-            <CardDescription>Get deeper insights about the analysis with GPT-4 powered Q&A</CardDescription>
+            <CardDescription>Ask GPT-4 specific questions about the combined financial analysis</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex space-x-2">
+              <div>
+                <Label htmlFor="followup">Your Question</Label>
                 <Textarea
-                  placeholder="Ask specific questions about the financial analysis, ratios, trends, or credit recommendations..."
+                  id="followup"
+                  placeholder="e.g., What are the liquidity concerns? How does the debt-to-equity ratio compare to industry standards? What are the key operational risks?"
                   value={followUpQuestion}
                   onChange={(e) => setFollowUpQuestion(e.target.value)}
-                  className="flex-1"
+                  className="mt-1"
                   rows={3}
                 />
-                <Button onClick={askFollowUp} disabled={isAsking || !followUpQuestion.trim()}>
-                  {isAsking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
               </div>
 
+              <Button onClick={() => handleAskQuestion()} disabled={isAsking || !followUpQuestion.trim()}>
+                {isAsking ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    GPT-4 Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Ask GPT-4
+                  </>
+                )}
+              </Button>
+
               {followUpResponse && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-semibold text-blue-900 mb-2">GPT-4 Response:</h4>
-                  <div className="text-blue-800 whitespace-pre-wrap">{formatMarkdown(followUpResponse)}</div>
+                <>
+                  <Separator />
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 mb-2">GPT-4 Response:</h4>
+                    <div className="prose prose-sm max-w-none text-blue-800 whitespace-pre-wrap">
+                      {followUpResponse}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {followUpQuestions.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">Suggested questions:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {followUpQuestions.map((question, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs bg-transparent"
+                        onClick={() => handleAskQuestion(question)}
+                      >
+                        {question}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -829,21 +862,29 @@ export function CombinedAnalysis() {
 
       {/* Chat History */}
       {currentSessionId && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Analysis History</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setShowChatHistory(!showChatHistory)}>
-                {showChatHistory ? "Hide" : "Show"} History
-              </Button>
-            </div>
-          </CardHeader>
-          {showChatHistory && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChatHistory
+            analysisType="combined"
+            onSelectSession={(sessionId) => {
+              const session = getSession(sessionId)
+              if (session) {
+                const analysisMessage = session.messages.find((m) => m.type === "analysis")
+                if (analysisMessage) {
+                  setAnalysis(analysisMessage.content)
+                }
+              }
+            }}
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Conversation History</CardTitle>
+              <CardDescription>Review your questions and AI responses for this document</CardDescription>
+            </CardHeader>
             <CardContent>
-              <ChatHistory sessionId={currentSessionId} />
+              <ChatMessages sessionId={currentSessionId} />
             </CardContent>
-          )}
-        </Card>
+          </Card>
+        </div>
       )}
     </div>
   )

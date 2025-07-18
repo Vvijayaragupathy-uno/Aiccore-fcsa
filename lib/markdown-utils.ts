@@ -1,14 +1,14 @@
 export function formatMarkdown(text: string): string {
   if (!text) return ""
 
-  return text
+  // Basic markdown formatting
+  const formatted = text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\n\n/g, "</p><p>")
+    .replace(/`(.*?)`/g, "<code>$1</code>")
     .replace(/\n/g, "<br>")
-    .replace(/^/, "<p>")
-    .replace(/$/, "</p>")
+
+  return formatted
 }
 
 export function extractAndFormatMetrics(text: string): Array<{
@@ -68,16 +68,10 @@ export function extractAndFormatMetrics(text: string): Array<{
 }
 
 export function formatCombinedAnalysis(analysisText: string): string {
-  try {
-    // Try to parse as JSON first
-    const analysis = JSON.parse(analysisText)
+  const analysis = parseJsonSafely(analysisText)
 
-    if (analysis.executiveSummary && analysis.sections) {
-      return formatStructuredAnalysis(analysis)
-    }
-  } catch (error) {
-    // If not JSON, treat as markdown text
-    console.log("Not JSON, treating as markdown text")
+  if (typeof analysis === "object" && analysis.executiveSummary && analysis.sections) {
+    return formatStructuredAnalysis(analysis)
   }
 
   // Fallback to original text formatting
@@ -257,4 +251,12 @@ export function formatIncomeStatementAnalysis(analysisText: string): string {
 
 export function formatBalanceSheetAnalysis(analysisText: string): string {
   return formatCombinedAnalysis(analysisText)
+}
+
+export function parseJsonSafely(text: string): any {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
 }
