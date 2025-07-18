@@ -1,35 +1,49 @@
+// Markdown formatting utilities for financial analysis responses
+
 export function formatMarkdown(text: string): string {
   if (!text) return ""
 
-  return (
-    text
-      // Convert **bold** to <strong>
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      // Convert *italic* to <em>
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      // Convert `code` to <code>
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      // Convert headers
-      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
-      .replace(/^## (.*$)/gm, "<h2>$1</h2>")
-      .replace(/^# (.*$)/gm, "<h1>$1</h1>")
-      // Convert bullet points
-      .replace(/^\* (.*$)/gm, "<li>$1</li>")
-      .replace(/^- (.*$)/gm, "<li>$1</li>")
-      // Convert numbered lists
-      .replace(/^\d+\. (.*$)/gm, "<li>$1</li>")
-      // Convert line breaks
-      .replace(/\n\n/g, "</p><p>")
-      .replace(/\n/g, "<br>")
-      // Wrap in paragraphs
-      .replace(/^(.)/gm, "<p>$1")
-      .replace(/(.)$/gm, "$1</p>")
-      // Clean up list formatting
-      .replace(/<p><li>/g, "<ul><li>")
-      .replace(/<\/li><\/p>/g, "</li></ul>")
-      // Clean up multiple paragraph tags
-      .replace(/<\/p><p>/g, "</p>\n<p>")
-  )
+  // Convert markdown-style formatting to HTML
+  let formatted = text
+    // Headers
+    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 mb-2">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-gray-900 mb-3">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 mb-4">$1</h1>')
+
+    // Bold text
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+
+    // Italic text
+    .replace(/\*(.*?)\*/g, '<em class="italic text-gray-700">$1</em>')
+
+    // Code blocks
+    .replace(
+      /```(.*?)```/gs,
+      '<pre class="bg-gray-100 p-3 rounded-lg text-sm font-mono overflow-x-auto mb-3"><code>$1</code></pre>',
+    )
+
+    // Inline code
+    .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
+
+    // Lists
+    .replace(/^\* (.*$)/gim, '<li class="ml-4 mb-1">• $1</li>')
+    .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1">• $1</li>')
+
+    // Line breaks
+    .replace(/\n\n/g, '</p><p class="text-gray-700 leading-relaxed mb-4">')
+    .replace(/\n/g, "<br>")
+
+  // Wrap in paragraph tags if not already wrapped
+  if (
+    !formatted.includes("<p>") &&
+    !formatted.includes("<h1>") &&
+    !formatted.includes("<h2>") &&
+    !formatted.includes("<h3>")
+  ) {
+    formatted = `<p class="text-gray-700 leading-relaxed mb-4">${formatted}</p>`
+  }
+
+  return formatted
 }
 
 export function extractAndFormatMetrics(text: string): Array<{
@@ -166,7 +180,7 @@ function formatStructuredAnalysis(analysis: any): string {
         markdown += `<h2>Key Metrics</h2>\n\n`
         section.metrics.forEach((metric: any) => {
           markdown += `<h3>${metric.name}</h3>\n`
-          markdown += `<strong>Value:</strong> ${metric.value}\n`
+          markdown += `<strong>Value:</strong> ${formatCurrency(metric.value)}\n`
           if (metric.trend) {
             markdown += `<strong>Trend:</strong> ${metric.trend}\n`
           }
@@ -196,7 +210,7 @@ function formatStructuredAnalysis(analysis: any): string {
         markdown += `<h2>Compliance Metrics</h2>\n\n`
         section.complianceMetrics.forEach((metric: any) => {
           markdown += `<h3>${metric.standard}</h3>\n`
-          markdown += `<strong>Current Value:</strong> ${metric.currentValue}\n`
+          markdown += `<strong>Current Value:</strong> ${formatCurrency(metric.currentValue)}\n`
           markdown += `<strong>Compliance Status:</strong> ${metric.compliance}\n`
           if (metric.gapAnalysis) {
             markdown += `<strong>Gap Analysis:</strong> ${metric.gapAnalysis}\n`
@@ -286,14 +300,14 @@ export function stripMarkdown(text: string): string {
   if (!text) return ""
 
   return text
+    .replace(/^#{1,6}\s+/gm, "") // Remove headers
     .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold
     .replace(/\*(.*?)\*/g, "$1") // Remove italic
-    .replace(/`([^`]+)`/g, "$1") // Remove code
-    .replace(/^#{1,6}\s/gm, "") // Remove headers
-    .replace(/^\* /gm, "") // Remove bullet points
-    .replace(/^- /gm, "") // Remove bullet points
-    .replace(/^\d+\. /gm, "") // Remove numbered lists
-    .replace(/\[([^\]]+)\]$$[^)]+$$/g, "$1") // Remove links
+    .replace(/```.*?```/gs, "") // Remove code blocks
+    .replace(/`(.*?)`/g, "$1") // Remove inline code
+    .replace(/^\* /gm, "") // Remove list markers
+    .replace(/^- /gm, "") // Remove list markers
+    .replace(/\n{2,}/g, "\n") // Normalize line breaks
     .trim()
 }
 
@@ -317,4 +331,32 @@ export function extractSummary(text: string, sentences = 2): string {
   const sentenceArray = text.split(sentenceEnders).filter((s) => s.trim().length > 0)
 
   return sentenceArray.slice(0, sentences).join(". ") + (sentenceArray.length > sentences ? "." : "")
+}
+
+export function formatCurrency(amount: number | string): string {
+  const num = typeof amount === "string" ? Number.parseFloat(amount.replace(/[,$]/g, "")) : amount
+
+  if (isNaN(num)) return amount.toString()
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num)
+}
+
+export function formatPercentage(value: number | string): string {
+  const num = typeof value === "string" ? Number.parseFloat(value.replace(/[%]/g, "")) : value
+
+  if (isNaN(num)) return value.toString()
+
+  return `${num.toFixed(1)}%`
+}
+
+export function formatRatio(numerator: number, denominator: number): string {
+  if (denominator === 0) return "N/A"
+
+  const ratio = numerator / denominator
+  return `${ratio.toFixed(2)}:1`
 }
