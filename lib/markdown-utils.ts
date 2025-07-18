@@ -1,14 +1,25 @@
 export function formatMarkdown(text: string): string {
   if (!text) return ""
 
-  // Basic markdown formatting
-  const formatted = text
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/`(.*?)`/g, "<code>$1</code>")
-    .replace(/\n/g, "<br>")
-
-  return formatted
+  return (
+    text
+      // Convert **bold** to <strong>
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      // Convert *italic* to <em>
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      // Convert `code` to <code>
+      .replace(/`(.*?)`/g, "<code>$1</code>")
+      // Convert line breaks
+      .replace(/\n/g, "<br>")
+      // Convert bullet points
+      .replace(/^\s*[-*+]\s(.+)$/gm, "<li>$1</li>")
+      // Wrap lists
+      .replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>")
+      // Convert headers
+      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
+      .replace(/^## (.*$)/gm, "<h2>$1</h2>")
+      .replace(/^# (.*$)/gm, "<h1>$1</h1>")
+  )
 }
 
 export function extractAndFormatMetrics(text: string): Array<{
@@ -84,73 +95,73 @@ function formatStructuredAnalysis(analysis: any): string {
   // Executive Summary
   if (analysis.executiveSummary) {
     const exec = analysis.executiveSummary
-    markdown += `# Executive Summary\n\n`
+    markdown += `<h1>Executive Summary</h1>\n\n`
 
     if (exec.overallHealth) {
-      markdown += `**Overall Health:** ${exec.overallHealth}\n\n`
+      markdown += `<strong>Overall Health:</strong> ${exec.overallHealth}\n\n`
     }
 
     if (exec.creditGrade) {
-      markdown += `**Credit Grade:** ${exec.creditGrade}\n\n`
+      markdown += `<strong>Credit Grade:</strong> ${exec.creditGrade}\n\n`
     }
 
     if (exec.gradeExplanation) {
-      markdown += `**Grade Explanation:**\n${exec.gradeExplanation}\n\n`
+      markdown += `<strong>Grade Explanation:</strong>\n${exec.gradeExplanation}\n\n`
     }
 
     if (exec.standardPrinciples) {
-      markdown += `**Standard Principles:**\n${exec.standardPrinciples}\n\n`
+      markdown += `<strong>Standard Principles:</strong>\n${exec.standardPrinciples}\n\n`
     }
 
     if (exec.keyStrengths && exec.keyStrengths.length > 0) {
-      markdown += `**Key Strengths:**\n`
+      markdown += `<strong>Key Strengths:</strong>\n<ul>`
       exec.keyStrengths.forEach((strength: string) => {
-        markdown += `• ${strength}\n`
+        markdown += `<li>${strength}</li>`
       })
-      markdown += "\n"
+      markdown += `</ul>\n\n`
     }
 
     if (exec.criticalWeaknesses && exec.criticalWeaknesses.length > 0) {
-      markdown += `**Critical Weaknesses:**\n`
+      markdown += `<strong>Critical Weaknesses:</strong>\n<ul>`
       exec.criticalWeaknesses.forEach((weakness: string) => {
-        markdown += `• ${weakness}\n`
+        markdown += `<li>${weakness}</li>`
       })
-      markdown += "\n"
+      markdown += `</ul>\n\n`
     }
 
     if (exec.riskLevel) {
-      markdown += `**Risk Level:** ${exec.riskLevel}\n\n`
+      markdown += `<strong>Risk Level:</strong> ${exec.riskLevel}\n\n`
     }
 
     if (exec.creditRecommendation) {
-      markdown += `**Credit Recommendation:** ${exec.creditRecommendation}\n\n`
+      markdown += `<strong>Credit Recommendation:</strong> ${exec.creditRecommendation}\n\n`
     }
   }
 
   // Sections
   if (analysis.sections && analysis.sections.length > 0) {
     analysis.sections.forEach((section: any) => {
-      markdown += `# ${section.title}\n\n`
+      markdown += `<h1>${section.title}</h1>\n\n`
 
       if (section.summary) {
-        markdown += `**Summary:** ${section.summary}\n\n`
+        markdown += `<strong>Summary:</strong> ${section.summary}\n\n`
       }
 
       if (section.narrative) {
-        markdown += `## Analysis\n\n${section.narrative}\n\n`
+        markdown += `<h2>Analysis</h2>\n\n${section.narrative}\n\n`
       }
 
       // Handle metrics
       if (section.metrics && section.metrics.length > 0) {
-        markdown += `## Key Metrics\n\n`
+        markdown += `<h2>Key Metrics</h2>\n\n`
         section.metrics.forEach((metric: any) => {
-          markdown += `### ${metric.name}\n`
-          markdown += `**Value:** ${metric.value}\n`
+          markdown += `<h3>${metric.name}</h3>\n`
+          markdown += `<strong>Value:</strong> ${metric.value}\n`
           if (metric.trend) {
-            markdown += `**Trend:** ${metric.trend}\n`
+            markdown += `<strong>Trend:</strong> ${metric.trend}\n`
           }
           if (metric.analysis) {
-            markdown += `**Analysis:** ${metric.analysis}\n`
+            markdown += `<strong>Analysis:</strong> ${metric.analysis}\n`
           }
           markdown += "\n"
         })
@@ -158,13 +169,13 @@ function formatStructuredAnalysis(analysis: any): string {
 
       // Handle credit factors (for 5 C's section)
       if (section.creditFactors && section.creditFactors.length > 0) {
-        markdown += `## Credit Factors Assessment\n\n`
+        markdown += `<h2>Credit Factors Assessment</h2>\n\n`
         section.creditFactors.forEach((factor: any) => {
-          markdown += `### ${factor.factor}\n`
-          markdown += `**Assessment:** ${factor.assessment}\n`
-          markdown += `**Score:** ${factor.score}\n`
+          markdown += `<h3>${factor.factor}</h3>\n`
+          markdown += `<strong>Assessment:</strong> ${factor.assessment}\n`
+          markdown += `<strong>Score:</strong> ${factor.score}\n`
           if (factor.supportingEvidence) {
-            markdown += `**Supporting Evidence:** ${factor.supportingEvidence}\n`
+            markdown += `<strong>Supporting Evidence:</strong> ${factor.supportingEvidence}\n`
           }
           markdown += "\n"
         })
@@ -172,13 +183,13 @@ function formatStructuredAnalysis(analysis: any): string {
 
       // Handle compliance metrics
       if (section.complianceMetrics && section.complianceMetrics.length > 0) {
-        markdown += `## Compliance Metrics\n\n`
+        markdown += `<h2>Compliance Metrics</h2>\n\n`
         section.complianceMetrics.forEach((metric: any) => {
-          markdown += `### ${metric.standard}\n`
-          markdown += `**Current Value:** ${metric.currentValue}\n`
-          markdown += `**Compliance Status:** ${metric.compliance}\n`
+          markdown += `<h3>${metric.standard}</h3>\n`
+          markdown += `<strong>Current Value:</strong> ${metric.currentValue}\n`
+          markdown += `<strong>Compliance Status:</strong> ${metric.compliance}\n`
           if (metric.gapAnalysis) {
-            markdown += `**Gap Analysis:** ${metric.gapAnalysis}\n`
+            markdown += `<strong>Gap Analysis:</strong> ${metric.gapAnalysis}\n`
           }
           markdown += "\n"
         })
@@ -186,14 +197,14 @@ function formatStructuredAnalysis(analysis: any): string {
 
       // Handle recommendations
       if (section.recommendations && section.recommendations.length > 0) {
-        markdown += `## Recommendations\n\n`
+        markdown += `<h2>Recommendations</h2>\n\n`
         section.recommendations.forEach((rec: any) => {
-          markdown += `### ${rec.category}\n`
-          markdown += `**Recommendation:** ${rec.recommendation}\n`
-          markdown += `**Priority:** ${rec.priority}\n`
-          markdown += `**Rationale:** ${rec.rationale}\n`
+          markdown += `<h3>${rec.category}</h3>\n`
+          markdown += `<strong>Recommendation:</strong> ${rec.recommendation}\n`
+          markdown += `<strong>Priority:</strong> ${rec.priority}\n`
+          markdown += `<strong>Rationale:</strong> ${rec.rationale}\n`
           if (rec.timeline) {
-            markdown += `**Timeline:** ${rec.timeline}\n`
+            markdown += `<strong>Timeline:</strong> ${rec.timeline}\n`
           }
           markdown += "\n"
         })
@@ -201,23 +212,23 @@ function formatStructuredAnalysis(analysis: any): string {
 
       // Handle monitoring requirements
       if (section.monitoringRequirements && section.monitoringRequirements.length > 0) {
-        markdown += `## Monitoring Requirements\n\n`
+        markdown += `<h2>Monitoring Requirements</h2>\n\n`
         section.monitoringRequirements.forEach((req: any) => {
-          markdown += `### ${req.metric}\n`
-          markdown += `**Frequency:** ${req.frequency}\n`
-          markdown += `**Threshold:** ${req.threshold}\n`
-          markdown += `**Action:** ${req.action}\n`
+          markdown += `<h3>${req.metric}</h3>\n`
+          markdown += `<strong>Frequency:</strong> ${req.frequency}\n`
+          markdown += `<strong>Threshold:</strong> ${req.threshold}\n`
+          markdown += `<strong>Action:</strong> ${req.action}\n`
           markdown += "\n"
         })
       }
 
       // Handle key findings
       if (section.keyFindings && section.keyFindings.length > 0) {
-        markdown += `## Key Findings\n\n`
+        markdown += `<h2>Key Findings</h2>\n\n<ul>`
         section.keyFindings.forEach((finding: string) => {
-          markdown += `• ${finding}\n`
+          markdown += `<li>${finding}</li>`
         })
-        markdown += "\n"
+        markdown += `</ul>\n\n`
       }
 
       markdown += "---\n\n"

@@ -14,19 +14,18 @@ export interface ChatSession {
   id: string
   fileName: string
   fileHash: string
-  analysisType: "income_statement" | "balance_sheet" | "combined"
-  messages: ChatMessage[]
+  analysisType: "income" | "balance_sheet" | "combined"
   createdAt: Date
-  updatedAt: Date
+  messages: ChatMessage[]
 }
 
 interface ChatContextType {
   sessions: ChatSession[]
   currentSessionId: string | null
-  createSession: (fileName: string, fileHash: string, analysisType: ChatSession["analysisType"]) => string
+  createSession: (fileName: string, fileHash: string, analysisType: "income" | "balance_sheet" | "combined") => string
   addMessage: (sessionId: string, message: Omit<ChatMessage, "id" | "timestamp">) => void
   getSession: (sessionId: string) => ChatSession | undefined
-  getSessionByFileHash: (fileHash: string, analysisType: ChatSession["analysisType"]) => ChatSession | undefined
+  getSessionByFileHash: (fileHash: string, analysisType: string) => ChatSession | undefined
   setCurrentSession: (sessionId: string) => void
   clearSessions: () => void
 }
@@ -38,16 +37,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
 
   const createSession = useCallback(
-    (fileName: string, fileHash: string, analysisType: ChatSession["analysisType"]): string => {
+    (fileName: string, fileHash: string, analysisType: "income" | "balance_sheet" | "combined") => {
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       const newSession: ChatSession = {
         id: sessionId,
         fileName,
         fileHash,
         analysisType,
-        messages: [],
         createdAt: new Date(),
-        updatedAt: new Date(),
+        messages: [],
       }
 
       setSessions((prev) => [...prev, newSession])
@@ -67,26 +65,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     setSessions((prev) =>
       prev.map((session) =>
-        session.id === sessionId
-          ? {
-              ...session,
-              messages: [...session.messages, fullMessage],
-              updatedAt: new Date(),
-            }
-          : session,
+        session.id === sessionId ? { ...session, messages: [...session.messages, fullMessage] } : session,
       ),
     )
   }, [])
 
   const getSession = useCallback(
-    (sessionId: string): ChatSession | undefined => {
+    (sessionId: string) => {
       return sessions.find((session) => session.id === sessionId)
     },
     [sessions],
   )
 
   const getSessionByFileHash = useCallback(
-    (fileHash: string, analysisType: ChatSession["analysisType"]): ChatSession | undefined => {
+    (fileHash: string, analysisType: string) => {
       return sessions.find((session) => session.fileHash === fileHash && session.analysisType === analysisType)
     },
     [sessions],
@@ -101,18 +93,22 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setCurrentSessionId(null)
   }, [])
 
-  const value: ChatContextType = {
-    sessions,
-    currentSessionId,
-    createSession,
-    addMessage,
-    getSession,
-    getSessionByFileHash,
-    setCurrentSession,
-    clearSessions,
-  }
-
-  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
+  return (
+    <ChatContext.Provider
+      value={{
+        sessions,
+        currentSessionId,
+        createSession,
+        addMessage,
+        getSession,
+        getSessionByFileHash,
+        setCurrentSession: setCurrentSession,
+        clearSessions,
+      }}
+    >
+      {children}
+    </ChatContext.Provider>
+  )
 }
 
 export function useChatContext() {

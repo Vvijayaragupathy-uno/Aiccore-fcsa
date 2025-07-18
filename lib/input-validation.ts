@@ -1,348 +1,126 @@
-/**
- * Enhanced input validation utilities for financial analysis components
- */
-
+// Input validation utilities
 export interface FileValidationResult {
   isValid: boolean
   error?: string
   warnings?: string[]
 }
 
-export interface FormValidationResult {
+export interface QuestionValidationResult {
   isValid: boolean
   errors: Record<string, string>
-  warnings?: Record<string, string>
+  warnings: Record<string, string>
 }
 
-export interface AnalysisValidationResult {
-  isValid: boolean
-  hasRequiredData: boolean
-  missingFields: string[]
-  warnings: string[]
-}
-
-/**
- * Comprehensive file validation for financial documents
- */
 export function validateFinancialFile(file: File): FileValidationResult {
-  const result: FileValidationResult = { isValid: true, warnings: [] }
+  const maxSize = 10 * 1024 * 1024 // 10MB
+  const allowedTypes = [".xlsx", ".xls", ".pdf"]
+  const warnings: string[] = []
 
-  // Check if file exists
-  if (!file) {
-    return { isValid: false, error: "No file selected" }
-  }
-
-  // Validate file name
-  if (!file.name || file.name.trim().length === 0) {
-    return { isValid: false, error: "Invalid file name" }
-  }
-
-  // Check for suspicious file names
-  const suspiciousPatterns = [
-    /^\./, // Hidden files
-    /\.(exe|bat|cmd|scr|vbs|js|jar|com|pif)$/i, // Executable files
-    /[<>:"|?*]/, // Invalid characters
-    /^\s+|\s+$/, // Leading/trailing spaces
-  ]
-  
-  if (suspiciousPatterns.some(pattern => pattern.test(file.name))) {
-    return { 
-      isValid: false, 
-      error: "Invalid file name detected. Please upload only financial documents with standard names." 
-    }
-  }
-
-  // Validate file type
-  const validTypes = [".xlsx", ".xls", ".pdf", ".csv"]
-  const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."))
-  
-  if (!fileExtension) {
-    return { isValid: false, error: "File must have a valid extension (.xlsx, .xls, .pdf, or .csv)" }
-  }
-
-  if (!validTypes.includes(fileExtension)) {
-    return { 
-      isValid: false, 
-      error: `Invalid file type "${fileExtension}". Please upload Excel (.xlsx, .xls), PDF, or CSV files only.` 
-    }
-  }
-
-  // Validate file size
-  const maxSize = 15 * 1024 * 1024 // 15MB
-  const minSize = 1024 // 1KB
-  
+  // Check file size
   if (file.size > maxSize) {
-    return { 
-      isValid: false, 
-      error: `File too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Please upload files smaller than 15MB.` 
+    return {
+      isValid: false,
+      error: "File size exceeds 10MB limit",
     }
   }
 
-  if (file.size < minSize) {
-    return { 
-      isValid: false, 
-      error: "File too small. Please ensure the file contains valid financial data." 
+  // Check file type
+  const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."))
+  if (!allowedTypes.includes(fileExtension)) {
+    return {
+      isValid: false,
+      error: "Unsupported file type. Please upload Excel (.xlsx, .xls) or PDF files only.",
     }
   }
 
-  // Add warnings for large files
-  if (file.size > 5 * 1024 * 1024) {
-    result.warnings?.push("Large file detected. Processing may take longer than usual.")
+  // Check file name
+  if (file.name.length > 100) {
+    warnings.push("File name is very long and may be truncated in reports")
   }
 
-  // Validate MIME type if available
-  if (file.type) {
-    const validMimeTypes = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-      'application/vnd.ms-excel', // .xls
-      'application/pdf', // .pdf
-      'text/csv', // .csv
-      'application/csv' // .csv alternative
-    ]
-    
-    if (!validMimeTypes.includes(file.type)) {
-      result.warnings?.push("File type may not be supported. Please ensure it's a valid financial document.")
+  // Check for empty file
+  if (file.size === 0) {
+    return {
+      isValid: false,
+      error: "File appears to be empty",
     }
   }
 
-  return result
+  return {
+    isValid: true,
+    warnings: warnings.length > 0 ? warnings : undefined,
+  }
 }
 
-/**
- * Validate follow-up question input
- */
-export function validateFollowUpQuestion(question: string): FormValidationResult {
+export function validateFollowUpQuestion(question: string): QuestionValidationResult {
   const errors: Record<string, string> = {}
   const warnings: Record<string, string> = {}
 
-  // Check if question exists
-  if (!question || question.trim().length === 0) {
-    errors.question = "Please enter a question"
-    return { isValid: false, errors, warnings }
+  // Check length
+  if (question.length < 5) {
+    errors.length = "Question must be at least 5 characters long"
   }
 
-  // Check minimum length
-  if (question.trim().length < 3) {
-    errors.question = "Question must be at least 3 characters long"
-    return { isValid: false, errors, warnings }
-  }
-
-  // Check maximum length
   if (question.length > 500) {
-    errors.question = "Question must be less than 500 characters"
-    return { isValid: false, errors, warnings }
+    errors.length = "Question must be less than 500 characters"
   }
 
-  // Check for suspicious content
-  const suspiciousPatterns = [
-    /<script/i,
-    /javascript:/i,
-    /on\w+\s*=/i,
-    /\beval\s*\(/i,
-    /\bexec\s*\(/i
-  ]
-
-  if (suspiciousPatterns.some(pattern => pattern.test(question))) {
-    errors.question = "Question contains invalid content"
-    return { isValid: false, errors, warnings }
+  // Check for inappropriate content (basic check)
+  const inappropriateWords = ["hack", "exploit", "bypass"]
+  if (inappropriateWords.some((word) => question.toLowerCase().includes(word))) {
+    errors.content = "Question contains inappropriate content"
   }
 
-  // Add warnings for very long questions
+  // Warnings
   if (question.length > 200) {
-    warnings.question = "Long questions may take more time to process"
+    warnings.length = "Long questions may receive truncated responses"
   }
 
-  // Check if it looks like a financial question
-  const financialKeywords = [
-    'ratio', 'income', 'expense', 'asset', 'liability', 'equity', 'cash', 'debt',
-    'profit', 'loss', 'revenue', 'cost', 'balance', 'statement', 'financial',
-    'analysis', 'trend', 'performance', 'risk', 'credit', 'loan', 'investment'
-  ]
-
-  const hasFinancialContext = financialKeywords.some(keyword => 
-    question.toLowerCase().includes(keyword)
-  )
-
-  if (!hasFinancialContext) {
-    warnings.question = "Consider asking questions related to financial analysis for better results"
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    warnings,
   }
-
-  return { isValid: true, errors, warnings }
 }
 
-/**
- * Validate analysis data before processing
- */
-export function validateAnalysisData(data: any, analysisType: string): AnalysisValidationResult {
-  const result: AnalysisValidationResult = {
-    isValid: true,
-    hasRequiredData: false,
-    missingFields: [],
-    warnings: []
-  }
-
-  if (!data) {
-    result.isValid = false
-    result.missingFields.push("No data provided")
-    return result
-  }
-
-  // Define required fields by analysis type
-  const requiredFields: Record<string, string[]> = {
-    balance_sheet: ['totalAssets', 'totalLiabilities', 'totalEquity'],
-    income_statement: ['totalRevenue', 'totalExpenses', 'netIncome'],
-    combined: ['totalAssets', 'totalLiabilities', 'totalEquity', 'totalRevenue', 'netIncome']
-  }
-
-  const fields = requiredFields[analysisType] || []
-  
-  // Check for required fields
-  for (const field of fields) {
-    if (!data[field] && data[field] !== 0) {
-      result.missingFields.push(field)
-    }
-  }
-
-  // Check if we have any valid numeric data
-  const numericFields = Object.keys(data).filter(key => 
-    typeof data[key] === 'number' && !isNaN(data[key]) && isFinite(data[key])
-  )
-
-  if (numericFields.length === 0) {
-    result.isValid = false
-    result.warnings.push("No valid numeric data found")
-    return result
-  }
-
-  result.hasRequiredData = result.missingFields.length === 0
-
-  // Add warnings for missing optional but important fields
-  const optionalFields: Record<string, string[]> = {
-    balance_sheet: ['currentAssets', 'currentLiabilities', 'longTermDebt'],
-    income_statement: ['operatingIncome', 'interestExpense', 'depreciation'],
-    combined: ['currentAssets', 'currentLiabilities', 'operatingIncome', 'interestExpense']
-  }
-
-  const optional = optionalFields[analysisType] || []
-  const missingOptional = optional.filter(field => !data[field] && data[field] !== 0)
-  
-  if (missingOptional.length > 0) {
-    result.warnings.push(`Some optional fields are missing: ${missingOptional.join(', ')}. Analysis may be limited.`)
-  }
-
-  return result
-}
-
-/**
- * Sanitize user input to prevent XSS and other attacks
- */
 export function sanitizeInput(input: string): string {
-  if (!input) return ""
-  
   return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // Remove script tags
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, "") // Remove event handlers
     .trim()
-    .replace(/[<>]/g, '') // Remove angle brackets
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .replace(/\beval\s*\(/gi, '') // Remove eval calls
-    .replace(/\bexec\s*\(/gi, '') // Remove exec calls
-    .substring(0, 1000) // Limit length
 }
 
-/**
- * Validate numeric input
- */
-export function validateNumericInput(value: string | number, fieldName: string): FormValidationResult {
-  const errors: Record<string, string> = {}
-  
-  if (value === null || value === undefined || value === '') {
-    errors[fieldName] = `${fieldName} is required`
-    return { isValid: false, errors }
-  }
-
-  const numValue = typeof value === 'string' ? parseFloat(value) : value
-  
-  if (isNaN(numValue) || !isFinite(numValue)) {
-    errors[fieldName] = `${fieldName} must be a valid number`
-    return { isValid: false, errors }
-  }
-
-  // Check for reasonable ranges (adjust as needed)
-  if (Math.abs(numValue) > 1e15) {
-    errors[fieldName] = `${fieldName} value is too large`
-    return { isValid: false, errors }
-  }
-
-  return { isValid: true, errors }
-}
-
-/**
- * Validate email input (if needed for reports)
- */
-export function validateEmail(email: string): FormValidationResult {
-  const errors: Record<string, string> = {}
-  
-  if (!email || email.trim().length === 0) {
-    errors.email = "Email is required"
-    return { isValid: false, errors }
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    errors.email = "Please enter a valid email address"
-    return { isValid: false, errors }
-  }
-
-  if (email.length > 254) {
-    errors.email = "Email address is too long"
-    return { isValid: false, errors }
-  }
-
-  return { isValid: true, errors }
-}
-
-/**
- * Rate limit validation for API calls
- */
-export class RateLimiter {
+// Rate limiting utilities
+class RateLimiter {
   private calls: number[] = []
   private maxCalls: number
-  private timeWindow: number
+  private windowMs: number
 
-  constructor(maxCalls: number = 10, timeWindowMs: number = 60000) {
+  constructor(maxCalls: number, windowMs: number) {
     this.maxCalls = maxCalls
-    this.timeWindow = timeWindowMs
+    this.windowMs = windowMs
   }
 
   canMakeCall(): boolean {
     const now = Date.now()
-    
-    // Remove old calls outside the time window
-    this.calls = this.calls.filter(callTime => now - callTime < this.timeWindow)
-    
-    // Check if we can make a new call
-    if (this.calls.length >= this.maxCalls) {
-      return false
+    this.calls = this.calls.filter((time) => now - time < this.windowMs)
+
+    if (this.calls.length < this.maxCalls) {
+      this.calls.push(now)
+      return true
     }
 
-    // Record this call
-    this.calls.push(now)
-    return true
+    return false
   }
 
   getTimeUntilNextCall(): number {
-    if (this.calls.length < this.maxCalls) {
-      return 0
-    }
-
+    if (this.calls.length === 0) return 0
     const oldestCall = Math.min(...this.calls)
-    const timeUntilReset = this.timeWindow - (Date.now() - oldestCall)
-    return Math.max(0, timeUntilReset)
+    return Math.max(0, this.windowMs - (Date.now() - oldestCall))
   }
 }
 
-/**
- * Global rate limiter instances
- */
 export const analysisRateLimiter = new RateLimiter(5, 60000) // 5 calls per minute
-export const questionRateLimiter = new RateLimiter(20, 60000) // 20 calls per minute
+export const questionRateLimiter = new RateLimiter(10, 60000) // 10 calls per minute

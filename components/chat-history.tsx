@@ -1,66 +1,63 @@
 "use client"
-
-import type React from "react"
-
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Clock, FileText, MessageSquare, Trash2 } from "lucide-react"
+import { Clock, FileText, MessageSquare } from "lucide-react"
 import { useChatContext } from "@/contexts/chat-context"
-import { formatDistanceToNow } from "date-fns"
 
 interface ChatHistoryProps {
-  analysisType: "income_statement" | "balance_sheet" | "combined"
+  analysisType: "income" | "balance_sheet" | "combined"
   onSelectSession?: (sessionId: string) => void
 }
 
 export function ChatHistory({ analysisType, onSelectSession }: ChatHistoryProps) {
-  const { sessions, deleteSession, currentSessionId } = useChatContext()
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const { sessions, currentSessionId, setCurrentSession } = useChatContext()
 
-  // Filter sessions by analysis type
   const filteredSessions = sessions.filter((session) => session.analysisType === analysisType)
 
   const handleSelectSession = (sessionId: string) => {
-    setSelectedSessionId(sessionId)
+    setCurrentSession(sessionId)
     onSelectSession?.(sessionId)
   }
 
-  const handleDeleteSession = (sessionId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
-    deleteSession(sessionId)
-    if (selectedSessionId === sessionId) {
-      setSelectedSessionId(null)
-    }
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date)
   }
 
   const getAnalysisTypeLabel = (type: string) => {
     switch (type) {
-      case "income_statement":
+      case "income":
         return "Income Statement"
       case "balance_sheet":
         return "Balance Sheet"
       case "combined":
         return "Combined Analysis"
       default:
-        return "Analysis"
+        return type
     }
   }
 
-  const getAnalysisTypeColor = (type: string) => {
-    switch (type) {
-      case "income_statement":
-        return "bg-green-100 text-green-800"
-      case "balance_sheet":
-        return "bg-blue-100 text-blue-800"
-      case "combined":
-        return "bg-purple-100 text-purple-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  if (filteredSessions.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Clock className="h-5 w-5" />
+            <span>Session History</span>
+          </CardTitle>
+          <CardDescription>
+            Your {getAnalysisTypeLabel(analysisType).toLowerCase()} analysis sessions will appear here
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500 text-center py-8">No sessions yet</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -73,61 +70,46 @@ export function ChatHistory({ analysisType, onSelectSession }: ChatHistoryProps)
         <CardDescription>Previous {getAnalysisTypeLabel(analysisType).toLowerCase()} analysis sessions</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px]">
-          {filteredSessions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No previous sessions found</p>
-              <p className="text-sm">Upload and analyze a file to get started</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
-                    currentSessionId === session.id ? "border-blue-500 bg-blue-50" : "border-gray-200"
-                  }`}
-                  onClick={() => handleSelectSession(session.id)}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate">{session.fileName}</h4>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge className={`text-xs ${getAnalysisTypeColor(session.analysisType)}`}>
-                          {getAnalysisTypeLabel(session.analysisType)}
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={(e) => handleDeleteSession(session.id, e)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+        <div className="space-y-3">
+          {filteredSessions.map((session) => (
+            <div
+              key={session.id}
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                currentSessionId === session.id
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => handleSelectSession(session.id)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <span className="font-medium text-sm truncate">{session.fileName}</span>
                   </div>
-
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <MessageSquare className="h-4 w-4" />
+                  <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatDate(session.createdAt)}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {getAnalysisTypeLabel(session.analysisType)}
+                    </Badge>
+                  </div>
+                  {session.messages.length > 0 && (
+                    <div className="flex items-center space-x-1 mt-1 text-xs text-gray-500">
+                      <MessageSquare className="h-3 w-3" />
                       <span>{session.messages.length} messages</span>
                     </div>
-                    {session.fileHash && (
-                      <div className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
-                        {session.fileHash.substring(0, 8)}...
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-              ))}
+                {currentSessionId === session.id && (
+                  <Badge variant="default" className="text-xs">
+                    Active
+                  </Badge>
+                )}
+              </div>
             </div>
-          )}
-        </ScrollArea>
+          ))}
+        </div>
       </CardContent>
     </Card>
   )
@@ -141,59 +123,72 @@ export function ChatMessages({ sessionId }: ChatMessagesProps) {
   const { getSession } = useChatContext()
   const session = getSession(sessionId)
 
-  if (!session) {
+  if (!session || session.messages.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>Session not found</p>
+        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p>No messages in this conversation yet</p>
       </div>
     )
   }
 
-  const conversationMessages = session.messages.filter(
-    (message) => message.type === "question" || message.type === "response",
-  )
+  const formatTime = (date: Date) => {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date)
+  }
+
+  const getMessageIcon = (type: string) => {
+    switch (type) {
+      case "question":
+        return "❓"
+      case "response":
+        return "🤖"
+      case "analysis":
+        return "📊"
+      default:
+        return "💬"
+    }
+  }
+
+  const getMessageTypeLabel = (type: string) => {
+    switch (type) {
+      case "question":
+        return "Question"
+      case "response":
+        return "AI Response"
+      case "analysis":
+        return "Analysis"
+      default:
+        return "Message"
+    }
+  }
 
   return (
-    <ScrollArea className="h-[400px]">
-      {conversationMessages.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>No conversation history</p>
-          <p className="text-sm">Ask questions about the analysis to start a conversation</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {conversationMessages.map((message, index) => (
-            <div key={index}>
-              <div
-                className={`p-3 rounded-lg ${
-                  message.type === "question"
-                    ? "bg-blue-50 border-l-4 border-blue-500"
-                    : "bg-gray-50 border-l-4 border-gray-500"
-                }`}
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <Badge variant={message.type === "question" ? "default" : "secondary"}>
-                    {message.type === "question" ? "Question" : "AI Response"}
-                  </Badge>
-                  <span className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-700 leading-relaxed">
-                  {message.type === "response" ? (
-                    <div dangerouslySetInnerHTML={{ __html: message.content }} />
-                  ) : (
-                    <p>{message.content}</p>
-                  )}
-                </div>
-              </div>
-              {index < conversationMessages.length - 1 && <Separator className="my-2" />}
+    <div className="space-y-4 max-h-96 overflow-y-auto">
+      {session.messages.map((message) => (
+        <div key={message.id} className="border-l-4 border-blue-200 pl-4 py-2">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">{getMessageIcon(message.type)}</span>
+              <span className="text-sm font-medium text-gray-700">{getMessageTypeLabel(message.type)}</span>
             </div>
-          ))}
+            <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
+          </div>
+          <div className="text-sm text-gray-600 leading-relaxed">
+            {message.type === "analysis" ? (
+              <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-32 overflow-y-auto">
+                {typeof message.content === "string"
+                  ? message.content.substring(0, 200) + (message.content.length > 200 ? "..." : "")
+                  : JSON.stringify(message.content, null, 2).substring(0, 200) + "..."}
+              </div>
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: message.content }} />
+            )}
+          </div>
         </div>
-      )}
-    </ScrollArea>
+      ))}
+    </div>
   )
 }
