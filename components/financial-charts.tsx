@@ -299,7 +299,7 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
                       <span className="text-sm font-medium">Net Income</span>
                       <TrendIcon trend={netIncomeTrend} />
                     </div>
-                    <div className="text-lg font-bold">{formatCurrency(currentYear.netIncome)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(currentYear.netIncome!)}</div>
                   </div>
                 )}
 
