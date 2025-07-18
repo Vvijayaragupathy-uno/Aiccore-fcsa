@@ -7,15 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, Send, Loader2, FileText, Target, AlertTriangle, Download } from "lucide-react"
+import { Upload, Send, Loader2, FileText, Target, Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { FinancialCharts } from "@/components/financial-charts"
 import { useToast } from "@/hooks/use-toast"
-import { formatMarkdown, extractAndFormatMetrics } from "@/lib/markdown-utils"
+import { formatMarkdown } from "@/lib/markdown-utils"
 import { useChatContext } from "@/contexts/chat-context"
-import { ChatHistory, ChatMessages } from "@/components/chat-history"
+import { ChatHistory } from "@/components/chat-history"
 import { createFileFingerprint } from "@/lib/file-processor"
 
 // Function to format combined analysis into structured sections
@@ -23,26 +22,29 @@ function formatCombinedAnalysis(analysis: any) {
   if (!analysis) return null
 
   // Handle string format (try to parse as JSON first)
-  if (typeof analysis === 'string') {
+  if (typeof analysis === "string") {
     try {
       const parsedAnalysis = JSON.parse(analysis)
       return formatCombinedAnalysis(parsedAnalysis)
     } catch {
       // Legacy text format - split analysis into sections based on numbered points
-      const sections = analysis.split(/(?=\d+\.)/).filter(section => section.trim())
-      
+      const sections = analysis.split(/(?=\d+\.)/).filter((section) => section.trim())
+
       return (
         <div className="space-y-6">
           {sections.map((section, index) => {
-            const lines = section.trim().split('\n').filter(line => line.trim())
+            const lines = section
+              .trim()
+              .split("\n")
+              .filter((line) => line.trim())
             if (lines.length === 0) return null
-            
+
             const titleMatch = lines[0].match(/^(\d+\.\s*)(.+?):/)
             const title = titleMatch ? titleMatch[2] : `Section ${index + 1}`
-            const content = titleMatch ? lines.slice(1).join(' ') : section
-            
-            const bulletPoints = content.split('•').filter(point => point.trim())
-            
+            const content = titleMatch ? lines.slice(1).join(" ") : section
+
+            const bulletPoints = content.split("•").filter((point) => point.trim())
+
             return (
               <div key={index} className="bg-white border rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -51,7 +53,7 @@ function formatCombinedAnalysis(analysis: any) {
                   </span>
                   {title}
                 </h3>
-                
+
                 {bulletPoints.length > 1 ? (
                   <div className="space-y-3">
                     {bulletPoints.map((point, pointIndex) => {
@@ -86,7 +88,7 @@ function formatCombinedAnalysis(analysis: any) {
               Executive Summary
             </span>
           </h3>
-          
+
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Overall Health</h4>
@@ -94,11 +96,15 @@ function formatCombinedAnalysis(analysis: any) {
             </div>
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Credit Grade</h4>
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                analysis.executiveSummary.creditGrade?.includes('A') ? 'bg-green-100 text-green-800' :
-                analysis.executiveSummary.creditGrade?.includes('B') ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                  analysis.executiveSummary.creditGrade?.includes("A")
+                    ? "bg-green-100 text-green-800"
+                    : analysis.executiveSummary.creditGrade?.includes("B")
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                }`}
+              >
                 {analysis.executiveSummary.creditGrade}
               </span>
             </div>
@@ -107,21 +113,21 @@ function formatCombinedAnalysis(analysis: any) {
           {analysis.executiveSummary.gradeExplanation && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-2">Grade Explanation</h4>
-              <p className="text-gray-700">{analysis.executiveSummary.gradeExplanation}</p>
+              <p className="text-gray-700 leading-relaxed">{analysis.executiveSummary.gradeExplanation}</p>
             </div>
           )}
 
           {analysis.executiveSummary.standardPrinciples && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-2">Standards Applied</h4>
-              <p className="text-gray-700">{analysis.executiveSummary.standardPrinciples}</p>
+              <p className="text-gray-700 leading-relaxed">{analysis.executiveSummary.standardPrinciples}</p>
             </div>
           )}
-          
+
           {analysis.executiveSummary.keyStrengths?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-2">Key Strengths</h4>
-              <ul className="space-y-1">
+              <ul className="space-y-2">
                 {analysis.executiveSummary.keyStrengths.map((strength: string, index: number) => (
                   <li key={index} className="flex items-start space-x-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -131,11 +137,11 @@ function formatCombinedAnalysis(analysis: any) {
               </ul>
             </div>
           )}
-          
+
           {analysis.executiveSummary.criticalWeaknesses?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-2">Critical Weaknesses</h4>
-              <ul className="space-y-1">
+              <ul className="space-y-2">
                 {analysis.executiveSummary.criticalWeaknesses.map((weakness: string, index: number) => (
                   <li key={index} className="flex items-start space-x-2">
                     <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -149,21 +155,29 @@ function formatCombinedAnalysis(analysis: any) {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Risk Level</h4>
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                analysis.executiveSummary.riskLevel === 'Low' ? 'bg-green-100 text-green-800' :
-                analysis.executiveSummary.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                  analysis.executiveSummary.riskLevel === "Low"
+                    ? "bg-green-100 text-green-800"
+                    : analysis.executiveSummary.riskLevel === "Medium"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                }`}
+              >
                 {analysis.executiveSummary.riskLevel}
               </span>
             </div>
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Credit Recommendation</h4>
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                analysis.executiveSummary.creditRecommendation === 'Approve' ? 'bg-green-100 text-green-800' :
-                analysis.executiveSummary.creditRecommendation === 'Conditional' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                  analysis.executiveSummary.creditRecommendation === "Approve"
+                    ? "bg-green-100 text-green-800"
+                    : analysis.executiveSummary.creditRecommendation === "Conditional"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                }`}
+              >
                 {analysis.executiveSummary.creditRecommendation}
               </span>
             </div>
@@ -180,54 +194,117 @@ function formatCombinedAnalysis(analysis: any) {
             </span>
             {section.title}
           </h3>
-          
+
           {section.summary && (
-            <p className="text-gray-700 mb-4 leading-relaxed">{section.summary}</p>
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Summary</h4>
+              <p className="text-gray-700 leading-relaxed">{section.summary}</p>
+            </div>
           )}
-          
+
           {section.narrative && (
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Analysis</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">Detailed Analysis</h4>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">{section.narrative}</p>
             </div>
           )}
-        
+
           {/* Metrics */}
           {section.metrics?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-3">Key Metrics</h4>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-1 gap-4">
                 {section.metrics.map((metric: any, metricIndex: number) => (
-                  <div key={metricIndex} className="bg-gray-50 rounded-lg p-4">
+                  <div key={metricIndex} className="bg-gray-50 rounded-lg p-4 border">
                     <div className="flex justify-between items-start mb-2">
                       <h5 className="font-medium text-gray-900">{metric.name || metric.metric}</h5>
                       {metric.trend && (
-                        <span className={`text-sm px-2 py-1 rounded ${
-                          metric.trend === 'Improving' || metric.trend === 'improving' ? 'bg-green-100 text-green-700' :
-                          metric.trend === 'Declining' || metric.trend === 'declining' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
+                        <span
+                          className={`text-sm px-2 py-1 rounded ${
+                            metric.trend === "Improving" || metric.trend === "improving"
+                              ? "bg-green-100 text-green-700"
+                              : metric.trend === "Declining" || metric.trend === "declining"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
                           {metric.trend}
                         </span>
                       )}
                     </div>
-                    {metric.value && (
-                      <p className="text-lg font-semibold text-purple-600 mb-2">{metric.value}</p>
-                    )}
+                    {metric.value && <p className="text-lg font-semibold text-purple-600 mb-2">{metric.value}</p>}
                     {metric.currentValue && (
                       <p className="text-lg font-semibold text-purple-600 mb-2">{metric.currentValue}</p>
                     )}
-                    {metric.frequency && (
-                      <p className="text-sm text-gray-600 mb-1"><strong>Frequency:</strong> {metric.frequency}</p>
+                    {metric.analysis && <p className="text-sm text-gray-600 leading-relaxed">{metric.analysis}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Credit Factors (5 C's) */}
+          {section.creditFactors?.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-3">5 C's of Credit Assessment</h4>
+              <div className="grid md:grid-cols-1 gap-4">
+                {section.creditFactors.map((factor: any, factorIndex: number) => (
+                  <div key={factorIndex} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-gray-900">{factor.factor}</h5>
+                      <span
+                        className={`text-sm px-2 py-1 rounded font-medium ${
+                          factor.score === "Strong" || factor.score === "Adequate"
+                            ? "bg-green-100 text-green-800"
+                            : factor.score === "Neutral"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {factor.score}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2 leading-relaxed">{factor.assessment}</p>
+                    {factor.supportingEvidence && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded">
+                        <p className="text-xs font-medium text-blue-800 mb-1">Supporting Evidence:</p>
+                        <p className="text-xs text-blue-700">{factor.supportingEvidence}</p>
+                      </div>
                     )}
-                    {metric.threshold && (
-                      <p className="text-sm text-gray-600 mb-1"><strong>Threshold:</strong> {metric.threshold}</p>
-                    )}
-                    {metric.action && (
-                      <p className="text-sm text-gray-600 mb-1"><strong>Action:</strong> {metric.action}</p>
-                    )}
-                    {metric.analysis && (
-                      <p className="text-sm text-gray-600">{metric.analysis}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Compliance Metrics */}
+          {section.complianceMetrics?.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-3">Lending Standards Compliance</h4>
+              <div className="grid md:grid-cols-1 gap-4">
+                {section.complianceMetrics.map((compliance: any, complianceIndex: number) => (
+                  <div key={complianceIndex} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-gray-900">{compliance.standard}</h5>
+                      <span
+                        className={`text-sm px-2 py-1 rounded font-medium ${
+                          compliance.compliance === "Above" || compliance.compliance === "Met"
+                            ? "bg-green-100 text-green-800"
+                            : compliance.compliance === "Below"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {compliance.compliance}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-1">
+                      <strong>Current Value:</strong> {compliance.currentValue}
+                    </p>
+                    {compliance.gapAnalysis && (
+                      <p className="text-sm text-gray-600">
+                        <strong>Gap Analysis:</strong> {compliance.gapAnalysis}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -241,32 +318,65 @@ function formatCombinedAnalysis(analysis: any) {
               <h4 className="font-semibold text-gray-800 mb-3">Recommendations</h4>
               <div className="space-y-3">
                 {section.recommendations.map((rec: any, recIndex: number) => (
-                  <div key={recIndex} className="border-l-4 border-purple-500 pl-4">
-                    <div className="flex justify-between items-start mb-1">
+                  <div key={recIndex} className="border-l-4 border-purple-500 pl-4 bg-purple-50 p-4 rounded-r-lg">
+                    <div className="flex justify-between items-start mb-2">
                       <h5 className="font-medium text-gray-900">{rec.category || rec.title}</h5>
                       {rec.priority && (
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          rec.priority === 'High' ? 'bg-red-100 text-red-700' :
-                          rec.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            rec.priority === "High"
+                              ? "bg-red-100 text-red-700"
+                              : rec.priority === "Medium"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-green-100 text-green-700"
+                          }`}
+                        >
                           {rec.priority} Priority
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-700 mb-1">{rec.recommendation || rec.description}</p>
+                    <p className="text-gray-700 mb-2 leading-relaxed">{rec.recommendation || rec.description}</p>
                     {rec.rationale && (
-                      <p className="text-sm text-gray-600">{rec.rationale}</p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>Rationale:</strong> {rec.rationale}
+                      </p>
                     )}
                     {rec.timeline && (
-                      <p className="text-sm text-gray-600 mt-1">Timeline: {rec.timeline}</p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Timeline:</strong> {rec.timeline}
+                      </p>
                     )}
                   </div>
                 ))}
               </div>
             </div>
           )}
-          
+
+          {/* Monitoring Requirements */}
+          {section.monitoringRequirements?.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-3">Monitoring Requirements</h4>
+              <div className="grid md:grid-cols-1 gap-4">
+                {section.monitoringRequirements.map((monitor: any, monitorIndex: number) => (
+                  <div key={monitorIndex} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-purple-900">{monitor.metric}</h5>
+                      <span className="text-sm px-2 py-1 bg-purple-100 text-purple-800 rounded">
+                        {monitor.frequency}
+                      </span>
+                    </div>
+                    <p className="text-sm text-purple-700 mb-1">
+                      <strong>Threshold:</strong> {monitor.threshold}
+                    </p>
+                    <p className="text-sm text-purple-600">
+                      <strong>Action:</strong> {monitor.action}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Key Findings */}
           {section.keyFindings?.length > 0 && (
             <div>
@@ -275,7 +385,7 @@ function formatCombinedAnalysis(analysis: any) {
                 {section.keyFindings.map((finding: string, findingIndex: number) => (
                   <li key={findingIndex} className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-700">{finding}</span>
+                    <span className="text-gray-700 leading-relaxed">{finding}</span>
                   </li>
                 ))}
               </ul>
@@ -302,12 +412,12 @@ export function CombinedAnalysis() {
   const [fileHash, setFileHash] = useState<string>("")
   const [showChatHistory, setShowChatHistory] = useState(false)
   const { toast } = useToast()
-  const { 
-    createSession, 
-    addMessage, 
-    getSessionByFileHash, 
-    currentSession: currentSessionId, 
-    setCurrentSession 
+  const {
+    createSession,
+    addMessage,
+    getSessionByFileHash,
+    currentSession: currentSessionId,
+    setCurrentSession,
   } = useChatContext()
 
   const validateFile = (file: File) => {
@@ -365,17 +475,17 @@ export function CombinedAnalysis() {
 
     try {
       // Create file hash for session management
-      const combinedHash = await createFileFingerprint(incomeFile) + await createFileFingerprint(balanceFile)
+      const combinedHash = (await createFileFingerprint(incomeFile)) + (await createFileFingerprint(balanceFile))
       setFileHash(combinedHash)
-      
+
       // Check for existing session or create new one
       let sessionId = currentSessionId
-      const existingSession = getSessionByFileHash(combinedHash, 'combined')
+      const existingSession = getSessionByFileHash(combinedHash, "combined")
       if (existingSession) {
         sessionId = existingSession.id
         setCurrentSession(sessionId)
       } else {
-        sessionId = createSession(`${incomeFile.name} + ${balanceFile.name}`, combinedHash, 'combined')
+        sessionId = createSession(`${incomeFile.name} + ${balanceFile.name}`, combinedHash, "combined")
       }
 
       // Enhanced progress updates with detailed steps
@@ -385,17 +495,17 @@ export function CombinedAnalysis() {
         { progress: 45, message: "Analyzing financial ratios and trends..." },
         { progress: 60, message: "Evaluating credit risk factors..." },
         { progress: 75, message: "Generating comprehensive insights..." },
-        { progress: 90, message: "Finalizing analysis report..." }
+        { progress: 90, message: "Finalizing analysis report..." },
       ]
-      
+
       let stepIndex = 0
-       const progressInterval = setInterval(() => {
-         if (stepIndex < progressSteps.length) {
-           setAnalysisProgress(progressSteps[stepIndex].progress)
-           setProgressMessage(progressSteps[stepIndex].message)
-           stepIndex++
-         }
-       }, 800)
+      const progressInterval = setInterval(() => {
+        if (stepIndex < progressSteps.length) {
+          setAnalysisProgress(progressSteps[stepIndex].progress)
+          setProgressMessage(progressSteps[stepIndex].message)
+          stepIndex++
+        }
+      }, 800)
 
       const formData = new FormData()
       formData.append("incomeFile", incomeFile)
@@ -414,11 +524,11 @@ export function CombinedAnalysis() {
 
       if (result.success) {
         setAnalysis(result.analysis)
-        
+
         // Add analysis to chat history
         addMessage(sessionId, {
-          type: 'analysis',
-          content: result.analysis
+          type: "analysis",
+          content: result.analysis,
         })
 
         if (result.metrics) {
@@ -466,8 +576,8 @@ export function CombinedAnalysis() {
     try {
       // Add question to chat history
       addMessage(currentSessionId, {
-        type: 'question',
-        content: questionToAsk
+        type: "question",
+        content: questionToAsk,
       })
 
       const response = await fetch("/api/follow-up", {
@@ -486,13 +596,13 @@ export function CombinedAnalysis() {
 
       if (result.success) {
         setFollowUpResponse(result.response)
-        
+
         // Add response to chat history
         addMessage(currentSessionId, {
-          type: 'response',
-          content: result.response
+          type: "response",
+          content: result.response,
         })
-        
+
         toast({
           title: "Question answered",
           description: "GPT-4 has provided comprehensive insights.",
@@ -627,7 +737,8 @@ export function CombinedAnalysis() {
               </div>
               <Progress value={analysisProgress} className="w-full" />
               <p className="text-xs text-muted-foreground">
-                Performing integrated financial analysis with GPT-4 to evaluate creditworthiness and lending recommendations
+                Performing integrated financial analysis with GPT-4 to evaluate creditworthiness and lending
+                recommendations
               </p>
             </div>
           </CardContent>
@@ -662,9 +773,7 @@ export function CombinedAnalysis() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {formatCombinedAnalysis(analysis)}
-            </div>
+            <div className="space-y-6">{formatCombinedAnalysis(analysis)}</div>
           </CardContent>
         </Card>
       )}
@@ -674,9 +783,7 @@ export function CombinedAnalysis() {
         <Card>
           <CardHeader>
             <CardTitle>Financial Trends Visualization</CardTitle>
-            <CardDescription>
-              Interactive charts showing key financial metrics over time
-            </CardDescription>
+            <CardDescription>Interactive charts showing key financial metrics over time</CardDescription>
           </CardHeader>
           <CardContent>
             <FinancialCharts data={financialData} />
@@ -692,9 +799,7 @@ export function CombinedAnalysis() {
               <Send className="h-5 w-5" />
               <span>Ask Follow-up Questions</span>
             </CardTitle>
-            <CardDescription>
-              Get deeper insights about the analysis with GPT-4 powered Q&A
-            </CardDescription>
+            <CardDescription>Get deeper insights about the analysis with GPT-4 powered Q&A</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -707,20 +812,14 @@ export function CombinedAnalysis() {
                   rows={3}
                 />
                 <Button onClick={askFollowUp} disabled={isAsking || !followUpQuestion.trim()}>
-                  {isAsking ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
+                  {isAsking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
 
               {followUpResponse && (
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <h4 className="font-semibold text-blue-900 mb-2">GPT-4 Response:</h4>
-                  <div className="text-blue-800 whitespace-pre-wrap">
-                    {formatMarkdown(followUpResponse)}
-                  </div>
+                  <div className="text-blue-800 whitespace-pre-wrap">{formatMarkdown(followUpResponse)}</div>
                 </div>
               )}
             </div>
@@ -734,12 +833,8 @@ export function CombinedAnalysis() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Analysis History</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowChatHistory(!showChatHistory)}
-              >
-                {showChatHistory ? 'Hide' : 'Show'} History
+              <Button variant="outline" size="sm" onClick={() => setShowChatHistory(!showChatHistory)}>
+                {showChatHistory ? "Hide" : "Show"} History
               </Button>
             </div>
           </CardHeader>
