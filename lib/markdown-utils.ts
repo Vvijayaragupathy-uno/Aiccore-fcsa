@@ -1,314 +1,154 @@
-// Markdown formatting utilities for financial analysis responses
+// Markdown and text formatting utilities
 
 export function formatMarkdown(text: string): string {
   if (!text) return ""
 
-  // Convert markdown-style formatting to HTML
   let formatted = text
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 mb-2">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-gray-900 mb-3">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 mb-4">$1</h1>')
 
-    // Bold text
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+  // Convert **bold** to <strong>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
 
-    // Italic text
-    .replace(/\*(.*?)\*/g, '<em class="italic text-gray-700">$1</em>')
+  // Convert *italic* to <em>
+  formatted = formatted.replace(/\*(.*?)\*/g, "<em>$1</em>")
 
-    // Code blocks
-    .replace(
-      /```(.*?)```/gs,
-      '<pre class="bg-gray-100 p-3 rounded-lg text-sm font-mono overflow-x-auto mb-3"><code>$1</code></pre>',
-    )
+  // Convert line breaks to <br>
+  formatted = formatted.replace(/\n/g, "<br>")
 
-    // Inline code
-    .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
+  // Convert bullet points
+  formatted = formatted.replace(/^- (.*$)/gim, "<li>$1</li>")
+  formatted = formatted.replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>")
 
-    // Lists
-    .replace(/^\* (.*$)/gim, '<li class="ml-4 mb-1">• $1</li>')
-    .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1">• $1</li>')
+  // Convert numbered lists
+  formatted = formatted.replace(/^\d+\. (.*$)/gim, "<li>$1</li>")
 
-    // Line breaks
-    .replace(/\n\n/g, '</p><p class="text-gray-700 leading-relaxed mb-4">')
-    .replace(/\n/g, "<br>")
+  // Format currency values
+  formatted = formatCurrency(formatted)
 
-  // Wrap in paragraph tags if not already wrapped
-  if (
-    !formatted.includes("<p>") &&
-    !formatted.includes("<h1>") &&
-    !formatted.includes("<h2>") &&
-    !formatted.includes("<h3>")
-  ) {
-    formatted = `<p class="text-gray-700 leading-relaxed mb-4">${formatted}</p>`
-  }
+  // Format percentages
+  formatted = formatPercentages(formatted)
+
+  // Format ratios
+  formatted = formatRatios(formatted)
 
   return formatted
 }
 
-export function extractAndFormatMetrics(text: string): Array<{
-  label: string
-  value: string
-  trend?: "up" | "down" | "stable"
-}> {
-  const metrics: Array<{ label: string; value: string; trend?: "up" | "down" | "stable" }> = []
+export function formatCurrency(text: string): string {
+  // Format currency values like $1,234,567
+  return text.replace(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="font-semibold text-green-600">$$$1</span>')
+}
 
-  // Extract common financial metrics
-  const lines = text.split("\n")
+export function formatPercentages(text: string): string {
+  // Format percentages like 15.5%
+  return text.replace(/(\d+(?:\.\d+)?%)/g, '<span class="font-medium text-blue-600">$1</span>')
+}
 
-  lines.forEach((line) => {
-    // Look for currency amounts
-    const currencyMatch = line.match(/\$[\d,]+/)
-    if (currencyMatch) {
-      const label = line.replace(currencyMatch[0], "").trim().replace(/[:-]/g, "").trim()
-      if (label && label.length > 3) {
-        metrics.push({
-          label: label.substring(0, 50), // Limit length
-          value: currencyMatch[0],
-        })
-      }
-    }
+export function formatRatios(text: string): string {
+  // Format ratios like 2.5:1 or 1.25x
+  return text.replace(
+    /(\d+(?:\.\d+)?:\d+(?:\.\d+)?|\d+(?:\.\d+)?x)/g,
+    '<span class="font-medium text-purple-600">$1</span>',
+  )
+}
 
-    // Look for percentages
-    const percentMatch = line.match(/\d+\.?\d*%/)
-    if (percentMatch) {
-      const label = line.replace(percentMatch[0], "").trim().replace(/[:-]/g, "").trim()
-      if (label && label.length > 3) {
-        metrics.push({
-          label: label.substring(0, 50),
-          value: percentMatch[0],
-        })
-      }
-    }
+export function formatFinancialMetrics(text: string): string {
+  let formatted = text
 
-    // Look for ratios
-    const ratioMatch = line.match(/\d+\.?\d*:\d+\.?\d*/)
-    if (ratioMatch) {
-      const label = line.replace(ratioMatch[0], "").trim().replace(/[:-]/g, "").trim()
-      if (label && label.length > 3) {
-        metrics.push({
-          label: label.substring(0, 50),
-          value: ratioMatch[0],
-        })
-      }
-    }
+  // Highlight key financial terms
+  const financialTerms = [
+    "Current Ratio",
+    "Quick Ratio",
+    "Debt-to-Equity",
+    "Return on Assets",
+    "Return on Equity",
+    "Working Capital",
+    "EBITDA",
+    "Net Income",
+    "Gross Profit",
+    "Operating Income",
+    "Total Assets",
+    "Total Liabilities",
+    "Shareholders Equity",
+    "Cash Flow",
+  ]
+
+  financialTerms.forEach((term) => {
+    const regex = new RegExp(`\\b${term}\\b`, "gi")
+    formatted = formatted.replace(regex, `<span class="font-semibold text-indigo-600">${term}</span>`)
   })
 
-  // Remove duplicates and limit to top 10
-  const uniqueMetrics = metrics
-    .filter((metric, index, self) => index === self.findIndex((m) => m.label === metric.label))
-    .slice(0, 10)
-
-  return uniqueMetrics
-}
-
-export function formatCombinedAnalysis(analysisText: string): string {
-  const analysis = parseJsonSafely(analysisText)
-
-  if (typeof analysis === "object" && analysis.executiveSummary && analysis.sections) {
-    return formatStructuredAnalysis(analysis)
-  }
-
-  // Fallback to original text formatting
-  return formatMarkdownText(analysisText)
-}
-
-function formatStructuredAnalysis(analysis: any): string {
-  let markdown = ""
-
-  // Executive Summary
-  if (analysis.executiveSummary) {
-    const exec = analysis.executiveSummary
-    markdown += `<h1>Executive Summary</h1>\n\n`
-
-    if (exec.overallHealth) {
-      markdown += `<strong>Overall Health:</strong> ${exec.overallHealth}\n\n`
-    }
-
-    if (exec.creditGrade) {
-      markdown += `<strong>Credit Grade:</strong> ${exec.creditGrade}\n\n`
-    }
-
-    if (exec.gradeExplanation) {
-      markdown += `<strong>Grade Explanation:</strong>\n${exec.gradeExplanation}\n\n`
-    }
-
-    if (exec.standardPrinciples) {
-      markdown += `<strong>Standard Principles:</strong>\n${exec.standardPrinciples}\n\n`
-    }
-
-    if (exec.keyStrengths && exec.keyStrengths.length > 0) {
-      markdown += `<strong>Key Strengths:</strong>\n<ul>`
-      exec.keyStrengths.forEach((strength: string) => {
-        markdown += `<li>${strength}</li>`
-      })
-      markdown += `</ul>\n\n`
-    }
-
-    if (exec.criticalWeaknesses && exec.criticalWeaknesses.length > 0) {
-      markdown += `<strong>Critical Weaknesses:</strong>\n<ul>`
-      exec.criticalWeaknesses.forEach((weakness: string) => {
-        markdown += `<li>${weakness}</li>`
-      })
-      markdown += `</ul>\n\n`
-    }
-
-    if (exec.riskLevel) {
-      markdown += `<strong>Risk Level:</strong> ${exec.riskLevel}\n\n`
-    }
-
-    if (exec.creditRecommendation) {
-      markdown += `<strong>Credit Recommendation:</strong> ${exec.creditRecommendation}\n\n`
-    }
-  }
-
-  // Sections
-  if (analysis.sections && analysis.sections.length > 0) {
-    analysis.sections.forEach((section: any) => {
-      markdown += `<h1>${section.title}</h1>\n\n`
-
-      if (section.summary) {
-        markdown += `<strong>Summary:</strong> ${section.summary}\n\n`
-      }
-
-      if (section.narrative) {
-        markdown += `<h2>Analysis</h2>\n\n${section.narrative}\n\n`
-      }
-
-      // Handle metrics
-      if (section.metrics && section.metrics.length > 0) {
-        markdown += `<h2>Key Metrics</h2>\n\n`
-        section.metrics.forEach((metric: any) => {
-          markdown += `<h3>${metric.name}</h3>\n`
-          markdown += `<strong>Value:</strong> ${formatCurrency(metric.value)}\n`
-          if (metric.trend) {
-            markdown += `<strong>Trend:</strong> ${metric.trend}\n`
-          }
-          if (metric.analysis) {
-            markdown += `<strong>Analysis:</strong> ${metric.analysis}\n`
-          }
-          markdown += "\n"
-        })
-      }
-
-      // Handle credit factors (for 5 C's section)
-      if (section.creditFactors && section.creditFactors.length > 0) {
-        markdown += `<h2>Credit Factors Assessment</h2>\n\n`
-        section.creditFactors.forEach((factor: any) => {
-          markdown += `<h3>${factor.factor}</h3>\n`
-          markdown += `<strong>Assessment:</strong> ${factor.assessment}\n`
-          markdown += `<strong>Score:</strong> ${factor.score}\n`
-          if (factor.supportingEvidence) {
-            markdown += `<strong>Supporting Evidence:</strong> ${factor.supportingEvidence}\n`
-          }
-          markdown += "\n"
-        })
-      }
-
-      // Handle compliance metrics
-      if (section.complianceMetrics && section.complianceMetrics.length > 0) {
-        markdown += `<h2>Compliance Metrics</h2>\n\n`
-        section.complianceMetrics.forEach((metric: any) => {
-          markdown += `<h3>${metric.standard}</h3>\n`
-          markdown += `<strong>Current Value:</strong> ${formatCurrency(metric.currentValue)}\n`
-          markdown += `<strong>Compliance Status:</strong> ${metric.compliance}\n`
-          if (metric.gapAnalysis) {
-            markdown += `<strong>Gap Analysis:</strong> ${metric.gapAnalysis}\n`
-          }
-          markdown += "\n"
-        })
-      }
-
-      // Handle recommendations
-      if (section.recommendations && section.recommendations.length > 0) {
-        markdown += `<h2>Recommendations</h2>\n\n`
-        section.recommendations.forEach((rec: any) => {
-          markdown += `<h3>${rec.category}</h3>\n`
-          markdown += `<strong>Recommendation:</strong> ${rec.recommendation}\n`
-          markdown += `<strong>Priority:</strong> ${rec.priority}\n`
-          markdown += `<strong>Rationale:</strong> ${rec.rationale}\n`
-          if (rec.timeline) {
-            markdown += `<strong>Timeline:</strong> ${rec.timeline}\n`
-          }
-          markdown += "\n"
-        })
-      }
-
-      // Handle monitoring requirements
-      if (section.monitoringRequirements && section.monitoringRequirements.length > 0) {
-        markdown += `<h2>Monitoring Requirements</h2>\n\n`
-        section.monitoringRequirements.forEach((req: any) => {
-          markdown += `<h3>${req.metric}</h3>\n`
-          markdown += `<strong>Frequency:</strong> ${req.frequency}\n`
-          markdown += `<strong>Threshold:</strong> ${req.threshold}\n`
-          markdown += `<strong>Action:</strong> ${req.action}\n`
-          markdown += "\n"
-        })
-      }
-
-      // Handle key findings
-      if (section.keyFindings && section.keyFindings.length > 0) {
-        markdown += `<h2>Key Findings</h2>\n\n<ul>`
-        section.keyFindings.forEach((finding: string) => {
-          markdown += `<li>${finding}</li>`
-        })
-        markdown += `</ul>\n\n`
-      }
-
-      markdown += "---\n\n"
-    })
-  }
-
-  return markdown
-}
-
-function formatMarkdownText(text: string): string {
-  // Clean up the text
-  let formatted = text
-    .replace(/\*\*(.*?)\*\*/g, "**$1**")
-    .replace(/\*(.*?)\*/g, "*$1*")
-    .replace(/#{1,6}\s/g, (match) => match)
-    .replace(/\n{3,}/g, "\n\n")
-    .trim()
-
-  // Ensure proper spacing around headers
-  formatted = formatted.replace(/^(#{1,6}\s.*$)/gm, "\n$1\n")
-
-  // Clean up extra newlines
-  formatted = formatted.replace(/\n{3,}/g, "\n\n").trim()
-
   return formatted
 }
 
-export function formatIncomeStatementAnalysis(analysisText: string): string {
-  return formatCombinedAnalysis(analysisText)
-}
+export function createSummaryText(analysis: any): string {
+  if (!analysis) return ""
 
-export function formatBalanceSheetAnalysis(analysisText: string): string {
-  return formatCombinedAnalysis(analysisText)
-}
+  let summary = ""
 
-export function parseJsonSafely(text: string): any {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return text
+  if (analysis.executiveSummary) {
+    summary += `<h3 class="text-lg font-semibold mb-2">Executive Summary</h3>`
+    summary += `<p class="mb-4">${analysis.executiveSummary.overallHealth}</p>`
+
+    if (analysis.executiveSummary.creditGrade) {
+      summary += `<p class="mb-2"><strong>Credit Grade:</strong> <span class="inline-flex px-2 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800">${analysis.executiveSummary.creditGrade}</span></p>`
+    }
+
+    if (analysis.executiveSummary.riskLevel) {
+      const riskColor =
+        analysis.executiveSummary.riskLevel === "Low"
+          ? "green"
+          : analysis.executiveSummary.riskLevel === "Medium"
+            ? "yellow"
+            : "red"
+      summary += `<p class="mb-4"><strong>Risk Level:</strong> <span class="inline-flex px-2 py-1 text-sm font-medium rounded-full bg-${riskColor}-100 text-${riskColor}-800">${analysis.executiveSummary.riskLevel}</span></p>`
+    }
   }
+
+  return summary
 }
 
-export function stripMarkdown(text: string): string {
-  if (!text) return ""
+export function formatAnalysisSection(section: any): string {
+  if (!section) return ""
 
-  return text
-    .replace(/^#{1,6}\s+/gm, "") // Remove headers
-    .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold
-    .replace(/\*(.*?)\*/g, "$1") // Remove italic
-    .replace(/```.*?```/gs, "") // Remove code blocks
-    .replace(/`(.*?)`/g, "$1") // Remove inline code
-    .replace(/^\* /gm, "") // Remove list markers
-    .replace(/^- /gm, "") // Remove list markers
-    .replace(/\n{2,}/g, "\n") // Normalize line breaks
-    .trim()
+  let formatted = `<div class="mb-6 p-4 border rounded-lg bg-white shadow-sm">`
+  formatted += `<h4 class="text-lg font-semibold mb-3">${section.title}</h4>`
+
+  if (section.summary) {
+    formatted += `<p class="mb-4 text-gray-700">${section.summary}</p>`
+  }
+
+  if (section.metrics && section.metrics.length > 0) {
+    formatted += `<div class="space-y-3">`
+    section.metrics.forEach((metric: any) => {
+      formatted += `<div class="bg-gray-50 p-3 rounded">`
+      formatted += `<h5 class="font-medium mb-1">${metric.name}</h5>`
+      if (metric.currentValue) {
+        formatted += `<p class="text-lg font-semibold text-blue-600 mb-1">${metric.currentValue}</p>`
+      }
+      if (metric.analysis) {
+        formatted += `<p class="text-sm text-gray-600">${metric.analysis}</p>`
+      }
+      formatted += `</div>`
+    })
+    formatted += `</div>`
+  }
+
+  if (section.keyFindings && section.keyFindings.length > 0) {
+    formatted += `<div class="mt-4">`
+    formatted += `<h5 class="font-medium mb-2">Key Findings:</h5>`
+    formatted += `<ul class="list-disc list-inside space-y-1">`
+    section.keyFindings.forEach((finding: string) => {
+      formatted += `<li class="text-sm text-gray-700">${finding}</li>`
+    })
+    formatted += `</ul></div>`
+  }
+
+  formatted += `</div>`
+  return formatted
+}
+
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "")
 }
 
 export function truncateText(text: string, maxLength = 200): string {
@@ -317,46 +157,65 @@ export function truncateText(text: string, maxLength = 200): string {
   const truncated = text.substring(0, maxLength)
   const lastSpace = truncated.lastIndexOf(" ")
 
-  if (lastSpace > maxLength * 0.8) {
+  if (lastSpace > 0) {
     return truncated.substring(0, lastSpace) + "..."
   }
 
   return truncated + "..."
 }
 
-export function extractSummary(text: string, sentences = 2): string {
-  if (!text) return ""
+export function highlightKeywords(text: string, keywords: string[]): string {
+  let highlighted = text
 
-  const sentenceEnders = /[.!?]+/g
-  const sentenceArray = text.split(sentenceEnders).filter((s) => s.trim().length > 0)
+  keywords.forEach((keyword) => {
+    const regex = new RegExp(`\\b${keyword}\\b`, "gi")
+    highlighted = highlighted.replace(regex, `<mark class="bg-yellow-200 px-1 rounded">$&</mark>`)
+  })
 
-  return sentenceArray.slice(0, sentences).join(". ") + (sentenceArray.length > sentences ? "." : "")
+  return highlighted
 }
 
-export function formatCurrency(amount: number | string): string {
-  const num = typeof amount === "string" ? Number.parseFloat(amount.replace(/[,$]/g, "")) : amount
+export function formatNumberWithCommas(num: number): string {
+  return num.toLocaleString()
+}
 
-  if (isNaN(num)) return amount.toString()
-
+export function formatCurrencyValue(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(num)
+  }).format(value)
 }
 
-export function formatPercentage(value: number | string): string {
-  const num = typeof value === "string" ? Number.parseFloat(value.replace(/[%]/g, "")) : value
-
-  if (isNaN(num)) return value.toString()
-
-  return `${num.toFixed(1)}%`
+export function formatPercentageValue(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value / 100)
 }
 
-export function formatRatio(numerator: number, denominator: number): string {
+export function formatRatioValue(numerator: number, denominator: number): string {
   if (denominator === 0) return "N/A"
-
   const ratio = numerator / denominator
   return `${ratio.toFixed(2)}:1`
+}
+
+// Export all utilities
+export const MarkdownUtils = {
+  formatMarkdown,
+  formatCurrency,
+  formatPercentages,
+  formatRatios,
+  formatFinancialMetrics,
+  createSummaryText,
+  formatAnalysisSection,
+  stripHtml,
+  truncateText,
+  highlightKeywords,
+  formatNumberWithCommas,
+  formatCurrencyValue,
+  formatPercentageValue,
+  formatRatioValue,
 }
