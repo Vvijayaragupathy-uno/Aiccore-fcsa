@@ -101,10 +101,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
               <h4 className="font-semibold text-gray-800 mb-2">Credit Grade</h4>
               <span
                 className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${analysis.executiveSummary.creditGrade?.includes("A")
-                    ? "bg-green-100 text-green-800"
-                    : analysis.executiveSummary.creditGrade?.includes("B")
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
+                  ? "bg-green-100 text-green-800"
+                  : analysis.executiveSummary.creditGrade?.includes("B")
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
                   }`}
               >
                 {analysis.executiveSummary.creditGrade}
@@ -132,10 +132,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
                 <h4 className="font-semibold text-gray-800 mb-2">Profitability Trend</h4>
                 <span
                   className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${analysis.executiveSummary.profitabilityTrend === "Improving"
-                      ? "bg-green-100 text-green-800"
-                      : analysis.executiveSummary.profitabilityTrend === "Stable"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                    ? "bg-green-100 text-green-800"
+                    : analysis.executiveSummary.profitabilityTrend === "Stable"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
                     }`}
                 >
                   {analysis.executiveSummary.profitabilityTrend}
@@ -147,10 +147,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
                 <h4 className="font-semibold text-gray-800 mb-2">Risk Level</h4>
                 <span
                   className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${analysis.executiveSummary.riskLevel === "Low"
-                      ? "bg-green-100 text-green-800"
-                      : analysis.executiveSummary.riskLevel === "Medium"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                    ? "bg-green-100 text-green-800"
+                    : analysis.executiveSummary.riskLevel === "Medium"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
                     }`}
                 >
                   {analysis.executiveSummary.riskLevel}
@@ -164,10 +164,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
               <h4 className="font-semibold text-gray-800 mb-2">Credit Recommendation</h4>
               <span
                 className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${analysis.executiveSummary.creditRecommendation === "Approve"
-                    ? "bg-green-100 text-green-800"
-                    : analysis.executiveSummary.creditRecommendation === "Conditional"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
+                  ? "bg-green-100 text-green-800"
+                  : analysis.executiveSummary.creditRecommendation === "Conditional"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
                   }`}
               >
                 {analysis.executiveSummary.creditRecommendation}
@@ -241,10 +241,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
                       {metric.trend && (
                         <span
                           className={`text-sm px-2 py-1 rounded ${metric.trend === "Improving"
-                              ? "bg-green-100 text-green-700"
-                              : metric.trend === "Declining"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-gray-100 text-gray-700"
+                            ? "bg-green-100 text-green-700"
+                            : metric.trend === "Declining"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-700"
                             }`}
                         >
                           {metric.trend}
@@ -270,10 +270,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
                       <h5 className="font-medium text-gray-900">{factor.factor}</h5>
                       <span
                         className={`text-sm px-2 py-1 rounded font-medium ${factor.score === "Strong" || factor.score === "Adequate"
-                            ? "bg-green-100 text-green-800"
-                            : factor.score === "Neutral"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                          ? "bg-green-100 text-green-800"
+                          : factor.score === "Neutral"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
                           }`}
                       >
                         {factor.score}
@@ -303,10 +303,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
                       <h5 className="font-medium text-gray-900">{compliance.standard}</h5>
                       <span
                         className={`text-sm px-2 py-1 rounded font-medium ${compliance.compliance === "Above" || compliance.compliance === "Met"
-                            ? "bg-green-100 text-green-800"
-                            : compliance.compliance === "Below"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
+                          ? "bg-green-100 text-green-800"
+                          : compliance.compliance === "Below"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                           }`}
                       >
                         {compliance.compliance}
@@ -338,10 +338,10 @@ function formatIncomeStatementAnalysis(analysis: any) {
                       {rec.priority && (
                         <span
                           className={`text-xs px-2 py-1 rounded ${rec.priority === "High"
-                              ? "bg-red-100 text-red-700"
-                              : rec.priority === "Medium"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-green-100 text-green-700"
+                            ? "bg-red-100 text-red-700"
+                            : rec.priority === "Medium"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
                             }`}
                         >
                           {rec.priority} Priority

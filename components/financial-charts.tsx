@@ -323,7 +323,7 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
           </CardHeader>
           <CardContent>
             <BarChart
-              values={data.map((d) => d.grossFarmIncome)}
+              values={data.map((d) => d.grossFarmIncome).filter((v): v is number => v !== undefined)}
               labels={years}
               title="Gross Farm Income by Year"
               color="bg-green-500"
@@ -402,13 +402,13 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <BarChart
-                values={data.map((d) => d.currentAssets)}
+                values={data.map((d) => d.currentAssets).filter((v): v is number => v !== undefined)}
                 labels={years}
                 title="Current Assets"
                 color="bg-blue-500"
               />
               <BarChart
-                values={data.map((d) => d.totalAssets - d.currentAssets)}
+                values={data.map((d) => (d.totalAssets || 0) - (d.currentAssets || 0)).filter(v => !isNaN(v))}
                 labels={years}
                 title="Non-Current Assets"
                 color="bg-purple-500"
@@ -492,7 +492,7 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
           </CardHeader>
           <CardContent>
             <LineChart
-              values={data.map((d) => d.netIncome)}
+              values={data.map((d) => d.netIncome).filter((v): v is number => v !== undefined)}
               labels={data.map((d) => d.year.toString())}
               title="Net Income Trend"
             />
@@ -505,7 +505,7 @@ export function FinancialCharts({ data, type }: FinancialChartsProps) {
           </CardHeader>
           <CardContent>
             <LineChart
-              values={data.map((d) => d.currentAssets - d.currentLiabilities)}
+              values={data.map((d) => (d.currentAssets || 0) - (d.currentLiabilities || 0)).filter(v => !isNaN(v))}
               labels={data.map((d) => d.year.toString())}
               title="Working Capital Trend"
             />
