@@ -16,7 +16,13 @@ import { formatMarkdown } from "@/lib/markdown-utils"
 import { useChatContext } from "@/contexts/chat-context"
 import { ChatHistory, ChatMessages } from "@/components/chat-history"
 import { createFileFingerprint } from "@/lib/file-processor"
-import { validateFinancialFile, validateFollowUpQuestion, sanitizeInput, analysisRateLimiter, questionRateLimiter } from "@/lib/input-validation"
+import {
+  validateFinancialFile,
+  validateFollowUpQuestion,
+  sanitizeInput,
+  analysisRateLimiter,
+  questionRateLimiter,
+} from "@/lib/input-validation"
 
 // Function to format balance sheet analysis into structured sections
 function formatBalanceSheetAnalysis(analysis: any) {
@@ -78,7 +84,7 @@ function formatBalanceSheetAnalysis(analysis: any) {
     }
   }
 
-  // New JSON format
+  // New JSON format - Display ALL sections and data
   return (
     <div className="space-y-6">
       {/* Executive Summary */}
@@ -160,6 +166,29 @@ function formatBalanceSheetAnalysis(analysis: any) {
             )}
           </div>
 
+          {/* Business Drivers */}
+          {analysis.executiveSummary.businessDrivers?.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Business Drivers</h4>
+              <ul className="space-y-2">
+                {analysis.executiveSummary.businessDrivers.map((driver: string, index: number) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-gray-700">{driver}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Industry Context */}
+          {analysis.executiveSummary.industryContext && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Industry Context</h4>
+              <p className="text-gray-700 leading-relaxed">{analysis.executiveSummary.industryContext}</p>
+            </div>
+          )}
+
           {analysis.executiveSummary.keyStrengths?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-2">Key Strengths</h4>
@@ -190,7 +219,93 @@ function formatBalanceSheetAnalysis(analysis: any) {
         </div>
       )}
 
-      {/* Analysis Sections */}
+      {/* Five C's Analysis */}
+      {analysis.fiveCsAnalysis && (
+        <div className="bg-white border rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <span className="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded-full mr-3">
+              5 C's
+            </span>
+            Five C's of Credit Analysis
+          </h3>
+
+          <div className="grid md:grid-cols-1 gap-4">
+            {Object.entries(analysis.fiveCsAnalysis).map(([key, value]: [string, any]) => (
+              <div key={key} className="bg-gray-50 rounded-lg p-4 border">
+                <h4 className="font-semibold text-gray-900 mb-2 capitalize">{key}</h4>
+                <p className="text-gray-700 mb-2">{value.assessment}</p>
+                {value.keyFactors && value.keyFactors.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Key Factors:</p>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {value.keyFactors.map((factor: string, index: number) => (
+                        <li key={index} className="flex items-start space-x-1">
+                          <span className="text-purple-500">•</span>
+                          <span>{factor}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {value.keyMetrics && value.keyMetrics.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Key Metrics:</p>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {value.keyMetrics.map((metric: string, index: number) => (
+                        <li key={index} className="flex items-start space-x-1">
+                          <span className="text-purple-500">•</span>
+                          <span>{metric}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {value.keyRatios && value.keyRatios.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Key Ratios:</p>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {value.keyRatios.map((ratio: string, index: number) => (
+                        <li key={index} className="flex items-start space-x-1">
+                          <span className="text-purple-500">•</span>
+                          <span>{ratio}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {value.assetValues && value.assetValues.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Asset Values:</p>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {value.assetValues.map((asset: string, index: number) => (
+                        <li key={index} className="flex items-start space-x-1">
+                          <span className="text-purple-500">•</span>
+                          <span>{asset}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {value.riskFactors && value.riskFactors.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Risk Factors:</p>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {value.riskFactors.map((risk: string, index: number) => (
+                        <li key={index} className="flex items-start space-x-1">
+                          <span className="text-red-500">•</span>
+                          <span>{risk}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Sections - Display ALL sections */}
       {analysis.sections?.map((section: any, index: number) => (
         <div key={index} className="bg-white border rounded-lg p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -214,7 +329,7 @@ function formatBalanceSheetAnalysis(analysis: any) {
             </div>
           )}
 
-          {/* Metrics */}
+          {/* Metrics - Display ALL metric fields */}
           {section.metrics?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-3">Key Metrics</h4>
@@ -237,187 +352,285 @@ function formatBalanceSheetAnalysis(analysis: any) {
                         </span>
                       )}
                     </div>
+
+                    {/* Display ALL metric properties */}
                     {metric.value && <p className="text-lg font-semibold text-blue-600 mb-2">{metric.value}</p>}
                     {metric.currentValue && (
                       <p className="text-lg font-semibold text-blue-600 mb-2">{metric.currentValue}</p>
                     )}
                     {metric.previousValue && (
-                      <p className="text-sm text-gray-600 mb-1">Previous: {metric.previousValue}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Previous:</strong> {metric.previousValue}
+                      </p>
                     )}
                     {metric.yearOverYearChange && (
-                      <p className="text-sm text-gray-600 mb-1">YoY Change: {metric.yearOverYearChange}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>YoY Change:</strong> {metric.yearOverYearChange}
+                      </p>
                     )}
-                    {metric.benchmark && (
-                      <p className="text-sm text-gray-600 mb-1">Benchmark: {metric.benchmark}</p>
-                    )}
-                    {metric.analysis && (
-                      <p className="text-sm text-gray-600">{metric.analysis}</p>
-                    )}
-                    {metric.explanation && (
-                      <p className="text-sm text-gray-600">{metric.explanation}</p>
-                    )}
-                    {metric.businessDrivers && metric.businessDrivers.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Business Drivers:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {metric.businessDrivers.map((driver: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-1">
-                              <span className="text-blue-500">•</span>
-                              <span>{driver}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {metric.riskImplications && metric.riskImplications.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Risk Implications:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {metric.riskImplications.map((risk: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-1">
-                              <span className="text-red-500">•</span>
-                              <span>{risk}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {/* Additional Balance Sheet Metric Fields */}
-                    {metric.timeline && (
-                      <p className="text-sm text-gray-600 mb-1">Timeline: {metric.timeline}</p>
-                    )}
-                    {metric.threshold && (
-                      <p className="text-sm text-gray-600 mb-1">Threshold: {metric.threshold}</p>
-                    )}
-                    {metric.action && (
-                      <p className="text-sm text-gray-600 mb-1">Action: {metric.action}</p>
-                    )}
-                    {/* Additional Balance Sheet Specific Fields */}
-                    {metric.composition && (
-                      <p className="text-sm text-gray-600 mb-1">Composition: {metric.composition}</p>
-                    )}
-                    {metric.realEstateValue && (
-                      <p className="text-sm text-gray-600 mb-1">Real Estate Value: {metric.realEstateValue}</p>
-                    )}
-                    {metric.assetQuality && (
-                      <p className="text-sm text-gray-600 mb-1">Asset Quality: {metric.assetQuality}</p>
-                    )}
-                    {metric.liquidityAssessment && (
-                      <p className="text-sm text-gray-600 mb-1">Liquidity: {metric.liquidityAssessment}</p>
-                    )}
-                    {metric.paymentPatterns && (
-                      <p className="text-sm text-gray-600 mb-1">Payment Patterns: {metric.paymentPatterns}</p>
-                    )}
-                    {metric.seasonalVariation && (
-                      <p className="text-sm text-gray-600 mb-1">Seasonal Variation: {metric.seasonalVariation}</p>
-                    )}
-                    {metric.supplierRelationships && (
-                      <p className="text-sm text-gray-600 mb-1">Supplier Relationships: {metric.supplierRelationships}</p>
-                    )}
-                    {metric.riskFactors && (
-                      <p className="text-sm text-gray-600 mb-1">Risk Factors: {metric.riskFactors}</p>
-                    )}
-                    {metric.serviceCapacity && (
-                      <p className="text-sm text-gray-600 mb-1">Service Capacity: {metric.serviceCapacity}</p>
-                    )}
-                    {metric.maturitySchedule && (
-                      <p className="text-sm text-gray-600 mb-1">Maturity Schedule: {metric.maturitySchedule}</p>
-                    )}
-                    {metric.interestRateExposure && (
-                      <p className="text-sm text-gray-600 mb-1">Interest Rate Exposure: {metric.interestRateExposure}</p>
-                    )}
-                    {metric.cashFlowAdequacy && (
-                      <p className="text-sm text-gray-600 mb-1">Cash Flow Adequacy: {metric.cashFlowAdequacy}</p>
-                    )}
-                    {metric.interestRates && (
-                      <p className="text-sm text-gray-600 mb-1">Interest Rates: {metric.interestRates}</p>
-                    )}
-                    {metric.maturityProfile && (
-                      <p className="text-sm text-gray-600 mb-1">Maturity Profile: {metric.maturityProfile}</p>
-                    )}
-                    {metric.covenantCompliance && (
-                      <p className="text-sm text-gray-600 mb-1">Covenant Compliance: {metric.covenantCompliance}</p>
-                    )}
-                    {metric.relationshipStrength && (
-                      <p className="text-sm text-gray-600 mb-1">Relationship Strength: {metric.relationshipStrength}</p>
-                    )}
-                    {metric.lenderDiversification && (
-                      <p className="text-sm text-gray-600 mb-1">Lender Diversification: {metric.lenderDiversification}</p>
-                    )}
-                    {metric.terms && (
-                      <p className="text-sm text-gray-600 mb-1">Terms: {metric.terms}</p>
-                    )}
-                    {metric.refinancingOpportunities && (
-                      <p className="text-sm text-gray-600 mb-1">Refinancing Opportunities: {metric.refinancingOpportunities}</p>
-                    )}
-                    {metric.debtServiceCoverage && (
-                      <p className="text-sm text-gray-600 mb-1">Debt Service Coverage: {metric.debtServiceCoverage}</p>
-                    )}
-                    {metric.leverageRatios && (
-                      <p className="text-sm text-gray-600 mb-1">Leverage Ratios: {metric.leverageRatios}</p>
-                    )}
-                    {metric.maturityLadder && (
-                      <p className="text-sm text-gray-600 mb-1">Maturity Ladder: {metric.maturityLadder}</p>
-                    )}
-                    {metric.riskAssessment && (
-                      <p className="text-sm text-gray-600 mb-1">Risk Assessment: {metric.riskAssessment}</p>
-                    )}
-                    {metric.loanToValueRatio && (
-                      <p className="text-sm text-gray-600 mb-1">Loan-to-Value Ratio: {metric.loanToValueRatio}</p>
-                    )}
-                    {metric.propertyValues && (
-                      <p className="text-sm text-gray-600 mb-1">Property Values: {metric.propertyValues}</p>
-                    )}
-                    {metric.collateralSecurity && (
-                      <p className="text-sm text-gray-600 mb-1">Collateral Security: {metric.collateralSecurity}</p>
-                    )}
-                    {metric.lenderTypes && (
-                      <p className="text-sm text-gray-600 mb-1">Lender Types: {metric.lenderTypes}</p>
-                    )}
-                    {metric.loanTerms && (
-                      <p className="text-sm text-gray-600 mb-1">Loan Terms: {metric.loanTerms}</p>
-                    )}
-                    {metric.marketRates && (
-                      <p className="text-sm text-gray-600 mb-1">Market Rates: {metric.marketRates}</p>
-                    )}
-                    {metric.refinancingPotential && (
-                      <p className="text-sm text-gray-600 mb-1">Refinancing Potential: {metric.refinancingPotential}</p>
-                    )}
-                    {metric.totalLoanToValue && (
-                      <p className="text-sm text-gray-600 mb-1">Total LTV: {metric.totalLoanToValue}</p>
-                    )}
-                    {metric.portfolioRisk && (
-                      <p className="text-sm text-gray-600 mb-1">Portfolio Risk: {metric.portfolioRisk}</p>
-                    )}
-                    {metric.marketExposure && (
-                      <p className="text-sm text-gray-600 mb-1">Market Exposure: {metric.marketExposure}</p>
-                    )}
-                    {metric.equityBuildingRate && (
-                      <p className="text-sm text-gray-600 mb-1">Equity Building Rate: {metric.equityBuildingRate}</p>
-                    )}
-                    {metric.sustainabilityAssessment && (
-                      <p className="text-sm text-gray-600 mb-1">Sustainability: {metric.sustainabilityAssessment}</p>
-                    )}
-                    {metric.returnOnEquity && (
-                      <p className="text-sm text-gray-600 mb-1">Return on Equity: {metric.returnOnEquity}</p>
-                    )}
-                    {metric.equityRatio && (
-                      <p className="text-sm text-gray-600 mb-1">Equity Ratio: {metric.equityRatio}</p>
-                    )}
-                    {metric.equityComposition && (
-                      <p className="text-sm text-gray-600 mb-1">Equity Composition: {metric.equityComposition}</p>
-                    )}
-                    {metric.leveragePosition && (
-                      <p className="text-sm text-gray-600 mb-1">Leverage Position: {metric.leveragePosition}</p>
-                    )}
-                    {metric.equityGrowthRate && (
-                      <p className="text-sm text-gray-600 mb-1">Equity Growth Rate: {metric.equityGrowthRate}</p>
-                    )}
-                    {metric.benchmarkComparison && (
-                      <p className="text-sm text-gray-600 mb-1">Benchmark Comparison: {metric.benchmarkComparison}</p>
+                    {metric.gapToStandard && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Gap to Standard:</strong> {metric.gapToStandard}
+                      </p>
                     )}
                     {metric.standardComparison && (
-                      <p className="text-sm text-gray-600 mb-1">Standard Comparison: {metric.standardComparison}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Standard Comparison:</strong> {metric.standardComparison}
+                      </p>
+                    )}
+                    {metric.calculation && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Calculation:</strong> {metric.calculation}
+                      </p>
+                    )}
+                    {metric.industryBenchmark && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Industry Benchmark:</strong> {metric.industryBenchmark}
+                      </p>
+                    )}
+                    {metric.seasonalFactors && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Seasonal Factors:</strong> {metric.seasonalFactors}
+                      </p>
+                    )}
+                    {metric.riskImplications && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Risk Implications:</strong> {metric.riskImplications}
+                      </p>
+                    )}
+                    {metric.depreciationPattern && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Depreciation Pattern:</strong> {metric.depreciationPattern}
+                      </p>
+                    )}
+                    {metric.marketValue && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Market Value:</strong> {metric.marketValue}
+                      </p>
+                    )}
+                    {metric.utilizationAssessment && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Utilization Assessment:</strong> {metric.utilizationAssessment}
+                      </p>
+                    )}
+                    {metric.collateralQuality && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Collateral Quality:</strong> {metric.collateralQuality}
+                      </p>
+                    )}
+                    {metric.composition && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Composition:</strong> {metric.composition}
+                      </p>
+                    )}
+                    {metric.realEstateValue && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Real Estate Value:</strong> {metric.realEstateValue}
+                      </p>
+                    )}
+                    {metric.assetQuality && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Asset Quality:</strong> {metric.assetQuality}
+                      </p>
+                    )}
+                    {metric.liquidityAssessment && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Liquidity Assessment:</strong> {metric.liquidityAssessment}
+                      </p>
+                    )}
+                    {metric.paymentPatterns && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Payment Patterns:</strong> {metric.paymentPatterns}
+                      </p>
+                    )}
+                    {metric.seasonalVariation && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Seasonal Variation:</strong> {metric.seasonalVariation}
+                      </p>
+                    )}
+                    {metric.supplierRelationships && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Supplier Relationships:</strong> {metric.supplierRelationships}
+                      </p>
+                    )}
+                    {metric.riskFactors && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Risk Factors:</strong> {metric.riskFactors}
+                      </p>
+                    )}
+                    {metric.serviceCapacity && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Service Capacity:</strong> {metric.serviceCapacity}
+                      </p>
+                    )}
+                    {metric.maturitySchedule && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Maturity Schedule:</strong> {metric.maturitySchedule}
+                      </p>
+                    )}
+                    {metric.interestRateExposure && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Interest Rate Exposure:</strong> {metric.interestRateExposure}
+                      </p>
+                    )}
+                    {metric.cashFlowAdequacy && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Cash Flow Adequacy:</strong> {metric.cashFlowAdequacy}
+                      </p>
+                    )}
+                    {metric.interestRates && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Interest Rates:</strong> {metric.interestRates}
+                      </p>
+                    )}
+                    {metric.maturityProfile && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Maturity Profile:</strong> {metric.maturityProfile}
+                      </p>
+                    )}
+                    {metric.covenantCompliance && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Covenant Compliance:</strong> {metric.covenantCompliance}
+                      </p>
+                    )}
+                    {metric.relationshipStrength && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Relationship Strength:</strong> {metric.relationshipStrength}
+                      </p>
+                    )}
+                    {metric.lenderDiversification && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Lender Diversification:</strong> {metric.lenderDiversification}
+                      </p>
+                    )}
+                    {metric.terms && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Terms:</strong> {metric.terms}
+                      </p>
+                    )}
+                    {metric.refinancingOpportunities && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Refinancing Opportunities:</strong> {metric.refinancingOpportunities}
+                      </p>
+                    )}
+                    {metric.debtServiceCoverage && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Debt Service Coverage:</strong> {metric.debtServiceCoverage}
+                      </p>
+                    )}
+                    {metric.leverageRatios && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Leverage Ratios:</strong> {metric.leverageRatios}
+                      </p>
+                    )}
+                    {metric.maturityLadder && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Maturity Ladder:</strong> {metric.maturityLadder}
+                      </p>
+                    )}
+                    {metric.riskAssessment && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Risk Assessment:</strong> {metric.riskAssessment}
+                      </p>
+                    )}
+                    {metric.loanToValueRatio && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Loan-to-Value Ratio:</strong> {metric.loanToValueRatio}
+                      </p>
+                    )}
+                    {metric.propertyValues && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Property Values:</strong> {metric.propertyValues}
+                      </p>
+                    )}
+                    {metric.collateralSecurity && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Collateral Security:</strong> {metric.collateralSecurity}
+                      </p>
+                    )}
+                    {metric.lenderTypes && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Lender Types:</strong> {metric.lenderTypes}
+                      </p>
+                    )}
+                    {metric.loanTerms && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Loan Terms:</strong> {metric.loanTerms}
+                      </p>
+                    )}
+                    {metric.marketRates && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Market Rates:</strong> {metric.marketRates}
+                      </p>
+                    )}
+                    {metric.refinancingPotential && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Refinancing Potential:</strong> {metric.refinancingPotential}
+                      </p>
+                    )}
+                    {metric.totalLoanToValue && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Total LTV:</strong> {metric.totalLoanToValue}
+                      </p>
+                    )}
+                    {metric.portfolioRisk && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Portfolio Risk:</strong> {metric.portfolioRisk}
+                      </p>
+                    )}
+                    {metric.marketExposure && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Market Exposure:</strong> {metric.marketExposure}
+                      </p>
+                    )}
+                    {metric.equityBuildingRate && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Equity Building Rate:</strong> {metric.equityBuildingRate}
+                      </p>
+                    )}
+                    {metric.sustainabilityAssessment && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Sustainability:</strong> {metric.sustainabilityAssessment}
+                      </p>
+                    )}
+                    {metric.returnOnEquity && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Return on Equity:</strong> {metric.returnOnEquity}
+                      </p>
+                    )}
+                    {metric.equityRatio && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Equity Ratio:</strong> {metric.equityRatio}
+                      </p>
+                    )}
+                    {metric.equityComposition && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Equity Composition:</strong> {metric.equityComposition}
+                      </p>
+                    )}
+                    {metric.leveragePosition && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Leverage Position:</strong> {metric.leveragePosition}
+                      </p>
+                    )}
+                    {metric.equityGrowthRate && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Equity Growth Rate:</strong> {metric.equityGrowthRate}
+                      </p>
+                    )}
+                    {metric.benchmarkComparison && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Benchmark Comparison:</strong> {metric.benchmarkComparison}
+                      </p>
+                    )}
+
+                    {/* Main analysis text */}
+                    {metric.analysis && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded">
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          <strong>Analysis:</strong> {metric.analysis}
+                        </p>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -425,7 +638,7 @@ function formatBalanceSheetAnalysis(analysis: any) {
             </div>
           )}
 
-          {/* Recommendations */}
+          {/* Recommendations - Display ALL recommendation fields */}
           {section.recommendations?.length > 0 && (
             <div className="mb-4">
               <h4 className="font-semibold text-gray-800 mb-3">Recommendations</h4>
@@ -455,69 +668,44 @@ function formatBalanceSheetAnalysis(analysis: any) {
                       </p>
                     )}
                     {rec.timeline && (
-                      <p className="text-sm text-gray-600 mt-1">Timeline: {rec.timeline}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Timeline:</strong> {rec.timeline}
+                      </p>
                     )}
-                    {rec.conditions && rec.conditions.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Conditions:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {rec.conditions.map((condition: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-1">
-                              <span className="text-blue-500">•</span>
-                              <span>{condition}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                    {rec.conditions && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Conditions:</strong> {rec.conditions}
+                      </p>
                     )}
-                    {rec.riskMitigation && rec.riskMitigation.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Risk Mitigation:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {rec.riskMitigation.map((risk: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-1">
-                              <span className="text-orange-500">•</span>
-                              <span>{risk}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                    {rec.riskMitigation && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Risk Mitigation:</strong> {rec.riskMitigation}
+                      </p>
                     )}
-                    {rec.measurableTargets && rec.measurableTargets.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Measurable Targets:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {rec.measurableTargets.map((target: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-1">
-                              <span className="text-green-500">•</span>
-                              <span>{target}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {rec.frequency && (
-                      <p className="text-sm text-gray-600 mt-1">Frequency: {rec.frequency}</p>
-                    )}
-                    {rec.triggerEvents && rec.triggerEvents.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Trigger Events:</p>
-                        <ul className="text-xs text-gray-600 space-y-1">
-                          {rec.triggerEvents.map((event: string, index: number) => (
-                            <li key={index} className="flex items-start space-x-1">
-                              <span className="text-purple-500">•</span>
-                              <span>{event}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {/* Balance Sheet Specific Recommendation Fields */}
                     {rec.alternativeStructures && (
-                      <p className="text-sm text-gray-600 mt-1">Alternative Structures: {rec.alternativeStructures}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Alternative Structures:</strong> {rec.alternativeStructures}
+                      </p>
                     )}
                     {rec.collateralRequirements && (
-                      <p className="text-sm text-gray-600 mt-1">Collateral Requirements: {rec.collateralRequirements}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Collateral Requirements:</strong> {rec.collateralRequirements}
+                      </p>
+                    )}
+                    {rec.measurableTargets && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Measurable Targets:</strong> {rec.measurableTargets}
+                      </p>
+                    )}
+                    {rec.frequency && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Frequency:</strong> {rec.frequency}
+                      </p>
+                    )}
+                    {rec.triggerEvents && (
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Trigger Events:</strong> {rec.triggerEvents}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -592,7 +780,7 @@ export function BalanceSheetAnalysis() {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0]
-    
+
     if (!uploadedFile) {
       return
     }
@@ -612,7 +800,7 @@ export function BalanceSheetAnalysis() {
 
     // Show warnings if any
     if (validation.warnings && validation.warnings.length > 0) {
-      validation.warnings.forEach(warning => {
+      validation.warnings.forEach((warning) => {
         toast({
           title: "File Warning",
           description: warning,
@@ -729,8 +917,8 @@ export function BalanceSheetAnalysis() {
       await generateFollowUpQuestions(typeof analysisData === "string" ? analysisData : JSON.stringify(analysisData))
 
       // Extract and set financial data for charts if available
-      if (data.financialData) {
-        setFinancialData(data.financialData)
+      if (data.metrics) {
+        setFinancialData(data.metrics)
       }
 
       // Create or update session with analysis
@@ -763,7 +951,7 @@ export function BalanceSheetAnalysis() {
 
   const handleAskQuestion = async (question?: string) => {
     const questionToAsk = question || followUpQuestion.trim()
-    
+
     // Validate question input
     if (!questionToAsk) {
       toast({
@@ -1087,7 +1275,7 @@ export function BalanceSheetAnalysis() {
 
                 {followUpResponse && (
                   <div className="p-4 bg-slate-50 rounded-lg border">
-                    <p className="whitespace-pre-line">{followUpResponse}</p>
+                    <div dangerouslySetInnerHTML={{ __html: followUpResponse }} />
                   </div>
                 )}
               </div>

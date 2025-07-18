@@ -78,21 +78,21 @@ Enhanced input handling and validation across all three financial analysis tabs 
 ### 5. Validation Utilities
 
 #### New Validation Functions
-```typescript
+\`\`\`typescript
 - validateFinancialFile(file: File): FileValidationResult
 - validateFollowUpQuestion(question: string): FormValidationResult
 - validateAnalysisData(data: any, type: string): AnalysisValidationResult
 - sanitizeInput(input: string): string
 - validateNumericInput(value: string | number, fieldName: string): FormValidationResult
 - validateEmail(email: string): FormValidationResult
-```
+\`\`\`
 
 #### Rate Limiting Classes
-```typescript
+\`\`\`typescript
 - RateLimiter class with configurable limits
 - analysisRateLimiter (5 calls/minute)
 - questionRateLimiter (20 calls/minute)
-```
+\`\`\`
 
 ## Implementation Details
 

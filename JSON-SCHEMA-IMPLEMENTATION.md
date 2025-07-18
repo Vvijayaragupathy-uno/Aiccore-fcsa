@@ -6,7 +6,7 @@ The frontend `formatCombinedAnalysis` function now handles the **EXACT** JSON sc
 
 ## 🎯 **API JSON Schema Structure**
 
-```json
+\`\`\`json
 {
   "executiveSummary": {
     "overallHealth": "string",
@@ -40,12 +40,12 @@ The frontend `formatCombinedAnalysis` function now handles the **EXACT** JSON sc
     }
   ]
 }
-```
+\`\`\`
 
 ## 🎨 **Frontend Implementation - Perfect Schema Match**
 
 ### **1. Executive Summary Rendering**
-```tsx
+\`\`\`tsx
 {analysis.executiveSummary && (
   <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6">
     <h3 className="text-xl font-bold text-gray-900 mb-4">Executive Summary</h3>
@@ -63,12 +63,12 @@ The frontend `formatCombinedAnalysis` function now handles the **EXACT** JSON sc
     {/* All other executiveSummary fields rendered exactly */}
   </div>
 )}
-```
+\`\`\`
 
 ### **2. Section-Specific Rendering**
 
 #### **Standard Sections (Earnings, Cash, Capital)**
-```tsx
+\`\`\`tsx
 <div className={`border rounded-lg p-6 shadow-sm ${
   section.title === 'Earnings' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' :
   section.title === 'Cash' ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200' :
@@ -77,10 +77,10 @@ The frontend `formatCombinedAnalysis` function now handles the **EXACT** JSON sc
 }`}>
   {/* Renders: title, summary, narrative, metrics, keyFindings */}
 </div>
-```
+\`\`\`
 
 #### **5 C's of Credit Assessment**
-```tsx
+\`\`\`tsx
 if (section.title === "5 C's of Credit Assessment" && section.creditFactors) {
   return (
     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
@@ -95,10 +95,10 @@ if (section.title === "5 C's of Credit Assessment" && section.creditFactors) {
     </div>
   )
 }
-```
+\`\`\`
 
 #### **Lending Standards Compliance**
-```tsx
+\`\`\`tsx
 if (section.title === "Lending Standards Compliance" && section.complianceMetrics) {
   return (
     <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
@@ -113,10 +113,10 @@ if (section.title === "Lending Standards Compliance" && section.complianceMetric
     </div>
   )
 }
-```
+\`\`\`
 
 #### **Credit Recommendations**
-```tsx
+\`\`\`tsx
 if (section.title === "Credit Recommendations" && section.recommendations) {
   return (
     <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-6">
@@ -142,12 +142,12 @@ if (section.title === "Credit Recommendations" && section.recommendations) {
     </div>
   )
 }
-```
+\`\`\`
 
 ## 🔍 **Schema Validation & Debugging**
 
 ### **API-Side Validation**
-```typescript
+\`\`\`typescript
 // Validate that the response matches our exact schema
 if (!structuredAnalysis.executiveSummary || !structuredAnalysis.sections) {
   throw new Error('Invalid JSON schema structure')
@@ -160,10 +160,10 @@ for (const field of requiredExecFields) {
     console.warn(`Missing executiveSummary field: ${field}`)
   }
 }
-```
+\`\`\`
 
 ### **Frontend-Side Validation**
-```tsx
+\`\`\`tsx
 // Validate the analysis object has the expected structure
 if (!analysis.executiveSummary || !analysis.sections) {
   console.warn('Analysis object missing required structure:', analysis)
@@ -178,7 +178,7 @@ if (!analysis.executiveSummary || !analysis.sections) {
     </div>
   )
 }
-```
+\`\`\`
 
 ## 🎯 **Key Features Implemented**
 

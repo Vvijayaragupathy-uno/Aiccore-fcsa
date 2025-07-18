@@ -7,7 +7,7 @@ This design addresses three critical issues in the combined financial analysis c
 ## Architecture
 
 ### Component Structure
-```
+\`\`\`
 CombinedAnalysis
 ├── FileUploadSection
 ├── ProgressIndicator
@@ -18,7 +18,7 @@ CombinedAnalysis
 ├── SuggestedQuestions (NEW)
 ├── FollowUpQuestions
 └── ChatHistory
-```
+\`\`\`
 
 ### Data Flow
 1. Analysis completion triggers question generation
@@ -30,7 +30,7 @@ CombinedAnalysis
 
 ### 1. Content Validation System
 
-```typescript
+\`\`\`typescript
 interface ValidationResult {
   isValid: boolean
   hasData: boolean
@@ -42,7 +42,7 @@ interface SectionValidator {
   validateMetric(metric: any): ValidationResult
   validateChart(data: any[]): ValidationResult
 }
-```
+\`\`\`
 
 **Purpose:** Centralized validation logic to determine if content should be displayed.
 
@@ -54,7 +54,7 @@ interface SectionValidator {
 
 ### 2. Suggested Questions Generator
 
-```typescript
+\`\`\`typescript
 interface SuggestedQuestion {
   id: string
   question: string
@@ -65,7 +65,7 @@ interface QuestionGenerator {
   generateQuestions(analysis: any): Promise<SuggestedQuestion[]>
   categorizeQuestions(questions: string[]): SuggestedQuestion[]
 }
-```
+\`\`\`
 
 **Purpose:** Automatically generate contextual follow-up questions using ChatGPT.
 
@@ -77,7 +77,7 @@ interface QuestionGenerator {
 
 ### 3. Enhanced Financial Charts
 
-```typescript
+\`\`\`typescript
 interface ChartValidation {
   hasValidData: boolean
   validDataPoints: number
@@ -88,13 +88,13 @@ interface EnhancedFinancialCharts extends FinancialCharts {
   validateChartData(data: any[]): ChartValidation
   renderEmptyState(): JSX.Element | null
 }
-```
+\`\`\`
 
 **Purpose:** Prevent rendering of charts with invalid or insufficient data.
 
 ### 4. Debt Coverage Calculator
 
-```typescript
+\`\`\`typescript
 interface DebtCoverageInputs {
   netIncome: number
   depreciation: number
@@ -108,14 +108,14 @@ interface DebtCoverageCalculator {
   validateInputs(inputs: Partial<DebtCoverageInputs>): boolean
   getCalculationMethod(): string
 }
-```
+\`\`\`
 
 **Purpose:** Provide accurate debt coverage calculations with proper validation.
 
 ## Data Models
 
 ### Enhanced Analysis Response
-```typescript
+\`\`\`typescript
 interface EnhancedAnalysisResponse {
   analysis: any
   metrics?: FinancialMetrics
@@ -126,10 +126,10 @@ interface EnhancedAnalysisResponse {
     metricsToHide: string[]
   }
 }
-```
+\`\`\`
 
 ### Validation Context
-```typescript
+\`\`\`typescript
 interface ValidationContext {
   hasIncomeData: boolean
   hasBalanceData: boolean
@@ -137,7 +137,7 @@ interface ValidationContext {
   hasValidTrends: boolean
   debtCoverageValid: boolean
 }
-```
+\`\`\`
 
 ## Error Handling
 
