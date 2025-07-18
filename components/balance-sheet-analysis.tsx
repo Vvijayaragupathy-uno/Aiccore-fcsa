@@ -898,6 +898,8 @@ export function BalanceSheetAnalysis() {
       const formData = new FormData()
       formData.append("file", file)
 
+      console.log("Starting balance sheet analysis...")
+
       const response = await fetch("/api/analyze-balance", {
         method: "POST",
         body: formData,
@@ -906,15 +908,37 @@ export function BalanceSheetAnalysis() {
       clearInterval(progressInterval)
       setAnalysisProgress(100)
 
+      console.log("Response status:", response.status)
+
       if (!response.ok) {
-        throw new Error("Failed to analyze balance sheet")
+        const errorData = await response.json().catch(() => ({ error: "Unknown error occurred" }))
+        console.error("API Error:", errorData)
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
 
       const data = await response.json()
+      console.log("Analysis data received:", data.success)
+
+      if (!data.success) {
+        throw new Error(data.error || "Analysis failed")
+      }
+
       // Handle both JSON and text analysis formats
       const analysisData = data.analysis
       setAnalysis(analysisData)
-      await generateFollowUpQuestions(typeof analysisData === "string" ? analysisData : JSON.stringify(analysisData))
+
+      // Generate follow-up questions
+      try {
+        await generateFollowUpQuestions(typeof analysisData === "string" ? analysisData : JSON.stringify(analysisData))
+      } catch (questionError) {
+        console.warn("Failed to generate follow-up questions:", questionError)
+        // Set default questions if generation fails
+        setFollowUpQuestions([
+          "What are the key trends in working capital?",
+          "How does the current ratio compare to industry standards?",
+          "What are the main risks in the balance sheet?",
+        ])
+      }
 
       // Extract and set financial data for charts if available
       if (data.metrics) {
@@ -939,13 +963,29 @@ export function BalanceSheetAnalysis() {
       })
     } catch (error) {
       console.error("Error analyzing balance sheet:", error)
+
+      let errorMessage = "Failed to analyze balance sheet. Please try again."
+
+      if (error instanceof Error) {
+        if (error.message.includes("fetch")) {
+          errorMessage = "Network error. Please check your connection and try again."
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Analysis timed out. Please try with a smaller file."
+        } else if (error.message.includes("rate limit")) {
+          errorMessage = "Too many requests. Please wait a moment and try again."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to analyze balance sheet. Please try again.",
+        title: "Analysis Error",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
       setIsAnalyzing(false)
+      setAnalysisProgress(0)
     }
   }
 
