@@ -23,6 +23,7 @@ import {
   analysisRateLimiter,
   questionRateLimiter,
 } from "@/lib/input-validation"
+import { usePDFExport } from "@/lib/pdf-export"
 
 // Function to format balance sheet analysis into structured sections
 function formatBalanceSheetAnalysis(analysis: any) {
@@ -748,6 +749,7 @@ export function BalanceSheetAnalysis() {
   const { toast } = useToast()
   const { createSession, addMessage, getSessionByFileHash, currentSessionId, setCurrentSession, getSession } =
     useChatContext()
+  const { exportToPDF } = usePDFExport()
 
   const generateFollowUpQuestions = async (analysisText: string) => {
     try {
@@ -1129,48 +1131,82 @@ export function BalanceSheetAnalysis() {
   }
 
   const exportReport = async () => {
-    setIsExporting(true)
-
-    try {
-      const response = await fetch("/api/export-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          analysis,
-          metrics: financialData,
-          reportType: "Balance Sheet",
-        }),
-      })
-
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = `balance-sheet-report-${new Date().toISOString().split("T")[0]}.pdf`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-
-        toast({
-          title: "Report exported",
-          description: "PDF report has been downloaded.",
-        })
-      } else {
-        throw new Error("Export failed")
-      }
-    } catch (error) {
+    if (!analysis) {
       toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        title: "No analysis to export",
+        description: "Please analyze a file first before exporting.",
         variant: "destructive",
       })
+      return
     }
 
-    setIsExporting(false)
+    setIsExporting(true)
+    try {
+      // Prepare analysis data for PDF export
+      let analysisData: any = analysis
+      
+      // If analysis is a string, try to parse it as JSON
+      if (typeof analysis === 'string') {
+        try {
+          analysisData = JSON.parse(analysis)
+        } catch {
+          // If parsing fails, create a simple structure
+          analysisData = {
+            executiveSummary: {
+              overallHealth: "Analysis completed successfully",
+              creditGrade: "See detailed analysis below"
+            },
+            sections: [{
+              title: "Balance Sheet Analysis",
+              summary: analysis
+            }]
+          }
+        }
+      }
+      
+      // Add financial data if available
+      if (financialData && financialData.length > 0) {
+        const years = financialData.map(d => d.year)
+        const metrics: any = { years }
+        
+        // Extract metrics from financial data
+        const metricKeys = [
+          'currentAssets', 'currentLiabilities', 'totalAssets', 
+          'totalLiabilities', 'totalEquity', 'workingCapital',
+          'currentRatio', 'equityRatio', 'debtToEquityRatio'
+        ]
+        
+        metricKeys.forEach(key => {
+          metrics[key] = financialData.map((d: any) => d[key] || 0)
+        })
+        
+        analysisData.visualizationData = metrics
+      }
+      
+      // Export to PDF
+      await exportToPDF(analysisData, {
+        filename: `balance-sheet-analysis-${new Date().toISOString().split('T')[0]}.pdf`,
+        title: 'Balance Sheet Analysis Report',
+        subtitle: file ? `Analysis of ${file.name}` : 'Financial Analysis Report',
+        includeCharts: true,
+        includeAnalysis: true,
+        includeMetrics: true
+      })
+
+      toast({
+        title: "PDF exported successfully",
+        description: "The balance sheet analysis has been downloaded as PDF.",
+      })
+    } catch (error) {
+      console.error("Error exporting PDF:", error)
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the PDF. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -1260,7 +1296,7 @@ export function BalanceSheetAnalysis() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">{formatBalanceSheetAnalysis(analysis)}</div>
+            <div id="balance-analysis-results" className="space-y-6">{formatBalanceSheetAnalysis(analysis)}</div>
           </CardContent>
         </Card>
       )}

@@ -17,6 +17,7 @@ import { formatMarkdown } from "@/lib/markdown-utils"
 import { useChatContext } from "@/contexts/chat-context"
 import { ChatHistory } from "@/components/chat-history"
 import { createFileFingerprint } from "@/lib/file-processor"
+import { usePDFExport } from "@/lib/pdf-export"
 
 // Function to extract visualization data from API response
 function extractVisualizationData(analysisResult: any) {
@@ -792,8 +793,10 @@ export function CombinedAnalysis() {
   const [followUpQuestion, setFollowUpQuestion] = useState("")
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([])
+  const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
   const { sessions, currentSessionId, createSession, addMessage, getSession } = useChatContext()
+  const { exportToPDF } = usePDFExport()
   
   // Get current session messages
   const currentSession = currentSessionId ? getSession(currentSessionId) : null
@@ -965,6 +968,83 @@ export function CombinedAnalysis() {
     }
   }
 
+  const handleExportReport = async () => {
+    if (!analysisResult) {
+      toast({
+        title: "No analysis to export",
+        description: "Please analyze files first before exporting.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      // Prepare analysis data for PDF export
+      let analysisData: any = analysisResult
+      
+      // If analysis is a string, try to parse it as JSON
+      if (typeof analysisResult === 'string') {
+        try {
+          analysisData = JSON.parse(analysisResult)
+        } catch {
+          // If parsing fails, create a simple structure
+          analysisData = {
+            executiveSummary: {
+              overallHealth: "Analysis completed successfully",
+              creditGrade: "See detailed analysis below"
+            },
+            sections: [{
+              title: "Combined Financial Analysis",
+              summary: analysisResult
+            }]
+          }
+        }
+      }
+      
+      // Extract visualization data if available
+      const vizData = extractVisualizationData(analysisResult)
+      if (vizData && vizData.length > 0) {
+        const years = vizData.map(d => d.year)
+        const metrics: any = { years }
+        
+        // Extract all available metrics
+        const firstDataPoint = vizData[0]
+        Object.keys(firstDataPoint).forEach(key => {
+          if (key !== 'year') {
+            metrics[key] = vizData.map(d => d[key] || 0)
+          }
+        })
+        
+        analysisData.visualizationData = metrics
+      }
+      
+      // Export to PDF
+      await exportToPDF(analysisData, {
+        filename: `combined-financial-analysis-${new Date().toISOString().split('T')[0]}.pdf`,
+        title: 'Combined Financial Analysis Report',
+        subtitle: `Analysis of ${incomeFile?.name || 'Income Statement'} and ${balanceFile?.name || 'Balance Sheet'}`,
+        includeCharts: true,
+        includeAnalysis: true,
+        includeMetrics: true
+      })
+
+      toast({
+        title: "PDF exported successfully",
+        description: "The combined financial analysis has been downloaded as PDF.",
+      })
+    } catch (error) {
+      console.error("Error exporting PDF:", error)
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the PDF. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handleSuggestedQuestion = (question: string) => {
     setFollowUpQuestion(question)
   }
@@ -1099,9 +1179,23 @@ export function CombinedAnalysis() {
                 <FileText className="h-5 w-5" />
                 <span>Combined Financial Analysis</span>
               </CardTitle>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export Report
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportReport}
+                disabled={isExporting || !analysisResult}
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export PDF
+                  </>
+                )}
               </Button>
             </div>
             <CardDescription>
@@ -1109,7 +1203,9 @@ export function CombinedAnalysis() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {formatCombinedAnalysis(analysisResult.analysis)}
+            <div id="combined-analysis-results">
+              {formatCombinedAnalysis(analysisResult.analysis)}
+            </div>
           </CardContent>
         </Card>
       )}

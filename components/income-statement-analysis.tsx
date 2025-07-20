@@ -19,6 +19,7 @@ import { useChatContext } from "@/contexts/chat-context"
 import { ChatHistory, ChatMessages } from "@/components/chat-history"
 import { createFileFingerprint } from "@/lib/file-processor"
 import { validateFinancialFile, validateFollowUpQuestion, sanitizeInput, analysisRateLimiter, questionRateLimiter } from "@/lib/input-validation"
+import { usePDFExport } from "@/lib/pdf-export"
 
 // Function to format income statement analysis into structured sections
 function formatIncomeStatementAnalysis(analysis: any) {
@@ -424,6 +425,7 @@ export function IncomeStatementAnalysis() {
   const { toast } = useToast()
   const { createSession, addMessage, getSessionByFileHash, currentSessionId, setCurrentSession, getSession } =
     useChatContext()
+  const { exportToPDF } = usePDFExport()
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0]
@@ -755,30 +757,77 @@ export function IncomeStatementAnalysis() {
   }
 
   const exportReport = async () => {
-    if (!analysis) return
+    if (!analysis) {
+      toast({
+        title: "No analysis to export",
+        description: "Please analyze a file first before exporting.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setIsExporting(true)
     try {
-      // Create a markdown file with the analysis
-      const blob = new Blob([analysis], { type: "text/markdown" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = "financial-analysis-report.md"
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      // Prepare analysis data for PDF export
+      let analysisData: any = analysis
+      
+      // If analysis is a string, try to parse it as JSON
+      if (typeof analysis === 'string') {
+        try {
+          analysisData = JSON.parse(analysis)
+        } catch {
+          // If parsing fails, create a simple structure
+          analysisData = {
+            executiveSummary: {
+              overallHealth: "Analysis completed successfully",
+              creditGrade: "See detailed analysis below"
+            },
+            sections: [{
+              title: "Financial Analysis",
+              summary: analysis
+            }]
+          }
+        }
+      }
+      
+      // Add financial data if available
+      if (financialData && financialData.length > 0) {
+        const years = financialData.map(d => d.year)
+        const metrics: any = { years }
+        
+        // Extract metrics from financial data
+        const metricKeys = [
+          'grossFarmIncome', 'operatingExpenses', 'netFarmIncome', 
+          'nonFarmIncome', 'netIncome', 'currentAssets', 'currentLiabilities',
+          'totalAssets', 'totalEquity', 'termDebt', 'debtServiceCoverage'
+        ]
+        
+        metricKeys.forEach(key => {
+          metrics[key] = financialData.map((d: any) => d[key] || 0)
+        })
+        
+        analysisData.visualizationData = metrics
+      }
+      
+      // Export to PDF
+      await exportToPDF(analysisData, {
+        filename: `income-statement-analysis-${new Date().toISOString().split('T')[0]}.pdf`,
+        title: 'Income Statement Analysis Report',
+        subtitle: file ? `Analysis of ${file.name}` : 'Financial Analysis Report',
+        includeCharts: true,
+        includeAnalysis: true,
+        includeMetrics: true
+      })
 
       toast({
-        title: "Report exported",
-        description: "The financial analysis report has been downloaded.",
+        title: "PDF exported successfully",
+        description: "The income statement analysis has been downloaded as PDF.",
       })
     } catch (error) {
-      console.error("Error exporting report:", error)
+      console.error("Error exporting PDF:", error)
       toast({
         title: "Export failed",
-        description: "There was an error exporting the report.",
+        description: "There was an error exporting the PDF. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -902,7 +951,7 @@ export function IncomeStatementAnalysis() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">{formatIncomeStatementAnalysis(analysis)}</div>
+            <div id="income-analysis-results" className="space-y-6">{formatIncomeStatementAnalysis(analysis)}</div>
           </CardContent>
         </Card>
       )}

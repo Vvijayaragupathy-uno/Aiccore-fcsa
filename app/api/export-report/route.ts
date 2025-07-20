@@ -1,20 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 export async function POST(request: NextRequest) {
   try {
     const { analysis, metrics, reportType } = await request.json()
 
-    // Generate PDF report (in production, use libraries like jsPDF or Puppeteer)
+    // Generate PDF report using pdf-lib
     const reportData = {
       title: `${reportType} Analysis Report`,
       date: new Date().toISOString().split("T")[0],
       analysis,
-      metrics,
-      charts: generateChartData(metrics),
+      metrics
     }
 
-    // In a real implementation, this would generate an actual PDF
-    const pdfBuffer = generatePDFReport(reportData)
+    // Generate an actual PDF using pdf-lib
+    const pdfBuffer = await generatePDFReport(reportData)
 
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -28,103 +28,116 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function generateChartData(metrics: any) {
-  // Generate chart configurations for the PDF
-  return {
-    incomeChart: metrics.grossIncome || [],
-    ratioChart: metrics.currentRatio || [],
-    trendChart: metrics.years || [],
-  }
-}
-
-function generatePDFReport(data: any): Buffer {
-  // Generate a comprehensive PDF report with proper formatting
-  const reportContent = `
-%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Resources <<
-/Font <<
-/F1 4 0 R
->>
->>
-/Contents 5 0 R
->>
-endobj
-
-4 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
-endobj
-
-5 0 obj
-<<
-/Length ${getContentLength(data)}
->>
-stream
-BT
-/F1 16 Tf
-50 750 Td
-(${data.title}) Tj
-0 -30 Td
-/F1 12 Tf
-(Generated: ${data.date}) Tj
-0 -40 Td
-/F1 14 Tf
-(Financial Analysis Summary) Tj
-0 -30 Td
-/F1 10 Tf
-${formatAnalysisForPDF(data.analysis)}
-${formatMetricsForPDF(data.metrics)}
-ET
-endstream
-endobj
-
-xref
-0 6
-0000000000 65535 f 
-0000000010 00000 n 
-0000000079 00000 n 
-0000000173 00000 n 
-0000000301 00000 n 
-0000000380 00000 n 
-trailer
-<<
-/Size 6
-/Root 1 0 R
->>
-startxref
-${500 + getContentLength(data)}
-%%EOF`
+async function generatePDFReport(data: any): Promise<Buffer> {
+  // Create a new PDF document
+  const pdfDoc = await PDFDocument.create()
   
-  return Buffer.from(reportContent)
-}
-
-function getContentLength(data: any): number {
-  const analysisLength = formatAnalysisForPDF(data.analysis).length
-  const metricsLength = formatMetricsForPDF(data.metrics).length
-  return 200 + analysisLength + metricsLength // Base content + dynamic content
+  // Add a page to the document
+  const page = pdfDoc.addPage()
+  
+  // Get the standard font
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  
+  // Set page dimensions
+  const { width, height } = page.getSize()
+  const margin = 50
+  let y = height - margin
+  
+  // Add title
+  page.drawText(data.title, {
+    x: margin,
+    y,
+    size: 18,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  })
+  
+  // Add date
+  y -= 30
+  page.drawText(`Generated: ${data.date}`, {
+    x: margin,
+    y,
+    size: 12,
+    font,
+    color: rgb(0.3, 0.3, 0.3),
+  })
+  
+  // Add analysis section title
+  y -= 40
+  page.drawText('Financial Analysis Summary', {
+    x: margin,
+    y,
+    size: 14,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  })
+  
+  // Add analysis content
+  y -= 20
+  const analysisText = formatAnalysisForPDF(data.analysis)
+  const lines = splitTextIntoLines(analysisText, 80)
+  
+  for (const line of lines) {
+    if (y < margin + 50) {
+      // Add a new page if we're running out of space
+      page = pdfDoc.addPage()
+      y = height - margin
+    }
+    
+    page.drawText(line, {
+      x: margin,
+      y,
+      size: 10,
+      font,
+      color: rgb(0, 0, 0),
+    })
+    
+    y -= 15
+  }
+  
+  // Add metrics section
+  y -= 20
+  if (y < margin + 100) {
+    // Add a new page if we're running out of space
+    page = pdfDoc.addPage()
+    y = height - margin
+  }
+  
+  page.drawText('Key Financial Metrics', {
+    x: margin,
+    y,
+    size: 14,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  })
+  
+  // Add metrics content
+  y -= 20
+  const metricsLines = formatMetricsForPDF(data.metrics)
+  
+  for (const line of metricsLines) {
+    if (y < margin + 50) {
+      // Add a new page if we're running out of space
+      page = pdfDoc.addPage()
+      y = height - margin
+    }
+    
+    page.drawText(line, {
+      x: margin,
+      y,
+      size: 10,
+      font,
+      color: rgb(0, 0, 0),
+    })
+    
+    y -= 15
+  }
+  
+  // Serialize the PDF to bytes
+  const pdfBytes = await pdfDoc.save()
+  
+  return Buffer.from(pdfBytes)
 }
 
 function formatAnalysisForPDF(analysis: any): string {
@@ -136,72 +149,128 @@ function formatAnalysisForPDF(analysis: any): string {
     textContent = analysis
   } else if (typeof analysis === 'object') {
     // Extract text from JSON structure
-    if (analysis.executiveSummary?.overallPerformance) {
-      textContent += analysis.executiveSummary.overallPerformance + ' '
+    if (analysis.executiveSummary?.overallHealth) {
+      textContent += 'Overall Health: ' + analysis.executiveSummary.overallHealth + '\n\n'
     }
+    
+    if (analysis.executiveSummary?.creditGrade) {
+      textContent += 'Credit Grade: ' + analysis.executiveSummary.creditGrade + '\n\n'
+    }
+    
+    if (analysis.executiveSummary?.gradeExplanation) {
+      textContent += analysis.executiveSummary.gradeExplanation + '\n\n'
+    }
+    
+    if (analysis.executiveSummary?.keyStrengths) {
+      textContent += 'Key Strengths:\n'
+      analysis.executiveSummary.keyStrengths.forEach((strength: string) => {
+        textContent += '• ' + strength + '\n'
+      })
+      textContent += '\n'
+    }
+    
+    if (analysis.executiveSummary?.criticalWeaknesses) {
+      textContent += 'Critical Weaknesses:\n'
+      analysis.executiveSummary.criticalWeaknesses.forEach((weakness: string) => {
+        textContent += '• ' + weakness + '\n'
+      })
+      textContent += '\n'
+    }
+    
     if (analysis.sections) {
-      analysis.sections.forEach((section: any) => {
-        if (section.summary) textContent += section.summary + ' '
+      analysis.sections.forEach((section: any, index: number) => {
+        textContent += `${index + 1}. ${section.title || 'Section ' + (index + 1)}\n`
+        
+        if (section.summary) {
+          textContent += section.summary + '\n\n'
+        }
+        
         if (section.keyFindings) {
           section.keyFindings.forEach((finding: string) => {
-            textContent += finding + ' '
+            textContent += '• ' + finding + '\n'
           })
+          textContent += '\n'
         }
       })
     }
   }
   
   // Clean and format analysis text for PDF
-  const cleanAnalysis = textContent
+  return textContent
     .replace(/[()\\]/g, '') // Remove PDF special characters
-    .replace(/\n/g, ' ') // Replace newlines with spaces
-    .substring(0, 1000) // Limit length
-  
-  // Split into lines for PDF formatting
-  const words = cleanAnalysis.split(' ')
-  let formattedText = ''
-  let currentLine = ''
-  
-  words.forEach(word => {
-    if (currentLine.length + word.length > 60) {
-      formattedText += `(${currentLine}) Tj\n0 -15 Td\n`
-      currentLine = word + ' '
-    } else {
-      currentLine += word + ' '
-    }
-  })
-  
-  if (currentLine.trim()) {
-    formattedText += `(${currentLine.trim()}) Tj\n0 -15 Td\n`
-  }
-  
-  return formattedText
+    .substring(0, 5000) // Limit length for preview
 }
 
-function formatMetricsForPDF(metrics: any): string {
-  if (!metrics) return ''
+function formatMetricsForPDF(metrics: any): string[] {
+  if (!metrics) return []
   
-  let metricsText = '0 -20 Td\n/F1 12 Tf\n(Key Financial Metrics:) Tj\n0 -20 Td\n/F1 10 Tf\n'
+  const lines: string[] = []
   
   // Format different types of metrics
   if (metrics.years && Array.isArray(metrics.years)) {
-    metricsText += `(Years Analyzed: ${metrics.years.join(', ')}) Tj\n0 -15 Td\n`
+    lines.push(`Years Analyzed: ${metrics.years.join(', ')}`)
   }
   
-  if (metrics.revenue && Array.isArray(metrics.revenue)) {
-    const avgRevenue = metrics.revenue.reduce((a: number, b: number) => a + b, 0) / metrics.revenue.length
-    metricsText += `(Average Revenue: $${avgRevenue.toLocaleString()}) Tj\n0 -15 Td\n`
+  // Add common metrics with averages
+  const metricKeys = [
+    { key: 'grossFarmIncome', label: 'Gross Farm Income' },
+    { key: 'grossIncome', label: 'Gross Income' },
+    { key: 'netFarmIncome', label: 'Net Farm Income' },
+    { key: 'netIncome', label: 'Net Income' },
+    { key: 'currentAssets', label: 'Current Assets' },
+    { key: 'currentLiabilities', label: 'Current Liabilities' },
+    { key: 'totalAssets', label: 'Total Assets' },
+    { key: 'totalEquity', label: 'Total Equity' },
+    { key: 'currentRatio', label: 'Current Ratio' },
+    { key: 'debtServiceCoverage', label: 'Debt Service Coverage' },
+    { key: 'returnOnAssets', label: 'Return on Assets' },
+    { key: 'returnOnEquity', label: 'Return on Equity' }
+  ]
+  
+  metricKeys.forEach(({ key, label }) => {
+    if (metrics[key] && Array.isArray(metrics[key]) && metrics[key].length > 0) {
+      const values = metrics[key]
+      const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length
+      
+      if (key.includes('Ratio') || key.includes('Coverage') || key.includes('Return')) {
+        // Format ratios with 2 decimal places
+        lines.push(`${label}: ${avg.toFixed(2)}`)
+      } else {
+        // Format monetary values with commas
+        lines.push(`${label}: ${Math.round(avg).toLocaleString()}`)
+      }
+    }
+  })
+  
+  return lines
+}
+
+function splitTextIntoLines(text: string, maxCharsPerLine: number): string[] {
+  const lines: string[] = []
+  const paragraphs = text.split('\n')
+  
+  for (const paragraph of paragraphs) {
+    if (paragraph.trim() === '') {
+      lines.push('')
+      continue
+    }
+    
+    let currentLine = ''
+    const words = paragraph.split(' ')
+    
+    for (const word of words) {
+      if (currentLine.length + word.length + 1 <= maxCharsPerLine) {
+        currentLine += (currentLine ? ' ' : '') + word
+      } else {
+        lines.push(currentLine)
+        currentLine = word
+      }
+    }
+    
+    if (currentLine) {
+      lines.push(currentLine)
+    }
   }
   
-  if (metrics.netIncome && Array.isArray(metrics.netIncome)) {
-    const avgIncome = metrics.netIncome.reduce((a: number, b: number) => a + b, 0) / metrics.netIncome.length
-    metricsText += `(Average Net Income: $${avgIncome.toLocaleString()}) Tj\n0 -15 Td\n`
-  }
-  
-  if (metrics.totalAssets && Array.isArray(metrics.totalAssets)) {
-    const avgAssets = metrics.totalAssets.reduce((a: number, b: number) => a + b, 0) / metrics.totalAssets.length
-    metricsText += `(Average Total Assets: $${avgAssets.toLocaleString()}) Tj\n0 -15 Td\n`
-  }
-  
-  return metricsText
+  return lines
 }
