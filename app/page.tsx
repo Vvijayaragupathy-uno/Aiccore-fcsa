@@ -22,7 +22,7 @@ export default function FinancialAnalysisPlatform() {
                 <BarChart3 className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Aiccore Credit Analysis </h1>
+                <h1 className="text-2xl font-bold text-gray-900">AgriLend Insight </h1>
                 <p className="text-sm text-gray-600">AI-Powered Financial Statement Analysis for Credit Underwriting</p>
               </div>
             </div>
