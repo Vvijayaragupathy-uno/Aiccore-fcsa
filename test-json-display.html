@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test JSON Display</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .executive-summary { background: linear-gradient(to right, #f3e8ff, #e0e7ff); }
+        .earnings { background: linear-gradient(to right, #f0fdf4, #dcfce7); }
+        .cash { background: linear-gradient(to right, #f0f9ff, #e0f2fe); }
+        .capital { background: linear-gradient(to right, #faf5ff, #f3e8ff); }
+        .credit-assessment { background: linear-gradient(to right, #eff6ff, #dbeafe); }
+        .compliance { background: linear-gradient(to right, #f0fdf4, #dcfce7); }
+        .recommendations { background: linear-gradient(to right, #fff7ed, #fed7aa); }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .grade-c { background: #fed7aa; color: #9a3412; }
+        .medium-risk { background: #fef3c7; color: #92400e; }
+        .conditional { background: #fef3c7; color: #92400e; }
+        .metric { background: #f9fafb; padding: 10px; margin: 5px 0; border-radius: 6px; }
+        .finding { display: flex; align-items: start; margin: 5px 0; }
+        .bullet { width: 8px; height: 8px; border-radius: 50%; margin-right: 10px; margin-top: 6px; }
+        .green { background: #10b981; }
+        .red { background: #ef4444; }
+        .blue { background: #3b82f6; }
+        .orange { background: #f59e0b; }
+        .purple { background: #8b5cf6; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Your exact raw JSON response
+        const rawJsonResponse = {
+            "executiveSummary": {
+                "overallHealth": "Moderate",
+                "creditGrade": "C",
+                "gradeExplanation": "The credit grade of C is assigned due to a combination of declining working capital, a current ratio below the target of 1.5:1, and a debt coverage ratio (DCR) that, while above 1.25:1, shows volatility. The net income has fluctuated significantly over the past years, indicating operational challenges. The overall leverage is concerning, with a high debt-to-equity ratio.",
+                "standardPrinciples": "The analysis adheres to GAAP principles and agricultural lending standards, focusing on cash flow adequacy, asset quality, and operational efficiency.",
+                "keyStrengths": [
+                    "Positive net income trends in recent years",
+                    "DCR above the minimum requirement",
+                    "Diverse income sources including nonfarm income"
+                ],
+                "criticalWeaknesses": [
+                    "Current ratio below target",
+                    "Declining working capital",
+                    "High levels of accrued interest and liabilities"
+                ],
+                "riskLevel": "Medium",
+                "creditRecommendation": "Conditional"
+            },
+            "sections": [
+                {
+                    "title": "Earnings",
+                    "summary": "Comprehensive analysis of farm income performance, profitability trends, and operational efficiency",
+                    "narrative": "Gross Farm Income has shown an upward trend, increasing from $1,444,924 in 2021 to $1,929,596 in 2023, reflecting a growth of 33.5%. However, Net Farm Income has fluctuated, with a peak of $414,228 in 2021 and a decline to $326,850 in 2023. The Net Nonfarm Income has remained stable, averaging around $160,000, providing a cushion against farm income volatility. The Margin After Servicing has decreased, indicating increased operational costs. The Term Interest and Principal Demand burden is significant, with total term interest payments of $220,874 in 2023, impacting net income. The DCR has been above the 1.25:1 threshold, averaging 1.47:1 over the past three years, but shows signs of instability.",
+                    "metrics": [
+                        {
+                            "name": "Gross Farm Income",
+                            "value": "$1,929,596 (2023), up 33.5% from $1,444,924 (2021)",
+                            "trend": "Improving",
+                            "analysis": "The increase in Gross Farm Income is attributed to higher crop yields and favorable market prices."
+                        },
+                        {
+                            "name": "Net Farm Income",
+                            "value": "$326,850 (2023), down from $414,228 (2021)",
+                            "trend": "Declining",
+                            "analysis": "Net Farm Income has decreased due to rising operational costs, particularly in feed and fertilizer."
+                        },
+                        {
+                            "name": "Earned Equity DCR (3-year avg)",
+                            "value": "1.47:1, with a margin after servicing of $75,086",
+                            "trend": "Stable",
+                            "analysis": "The DCR remains above the 1.25:1 standard, indicating adequate cash flow to cover debt obligations."
+                        }
+                    ],
+                    "keyFindings": [
+                        "Gross Farm Income has increased significantly, but Net Farm Income is declining.",
+                        "DCR is stable but shows volatility, indicating potential cash flow issues."
+                    ]
+                },
+                {
+                    "title": "Cash",
+                    "summary": "Cash flow analysis, debt service capacity, and liquidity assessment",
+                    "narrative": "The 3-year average Cash DCR is 1.47:1, indicating a reasonable capacity to service debt. However, projected cash flow shows potential declines due to rising costs. The Operating Expense Ratio is at 75%, which is at the upper limit of the target range, suggesting that operational efficiency needs improvement. Family living expenses are adequately covered, but the working capital position is concerning, with a negative working capital of -$413,774 in 2023, which could impact liquidity.",
+                    "metrics": [
+                        {
+                            "name": "Cash DCR (3-year avg)",
+                            "value": "1.47:1, with a margin after servicing of $75,086",
+                            "trend": "Stable",
+                            "analysis": "The average DCR indicates sufficient cash flow to meet debt obligations, but future projections are uncertain."
+                        },
+                        {
+                            "name": "Projected Cash DCR",
+                            "value": "1.30:1 projected for 2024",
+                            "trend": "Declining",
+                            "analysis": "Projected cash flow is expected to decline due to increased operational costs."
+                        },
+                        {
+                            "name": "Operating Expense Ratio",
+                            "value": "75%",
+                            "trend": "Stable",
+                            "analysis": "The ratio is at the upper limit of the target range, indicating potential inefficiencies in managing operational costs."
+                        }
+                    ],
+                    "keyFindings": [
+                        "Cash flow is adequate but projected to decline.",
+                        "High operating expense ratio indicates potential inefficiencies."
+                    ]
+                },
+                {
+                    "title": "Capital",
+                    "summary": "Working capital position, asset composition, debt structure, and equity analysis",
+                    "narrative": "Working capital has declined significantly, with a negative position of -$413,774 in 2023, indicating liquidity challenges. The Current Ratio is 0.75:1, below the target of 1.5:1, highlighting a gap of $1,167,774 needed to meet the standard. The Owner's Equity Ratio is 56.1%, which is acceptable but indicates high leverage. Total Non-Current Assets are valued at $11,788,269, providing a solid asset base, but the debt structure shows reliance on FCSAmerica loans, which could pose risks if market conditions change.",
+                    "metrics": [
+                        {
+                            "name": "Working Capital",
+                            "value": "-$413,774, declining from $345,692 in 2022",
+                            "trend": "Declining",
+                            "analysis": "Negative working capital indicates liquidity issues that could affect operational capabilities."
+                        },
+                        {
+                            "name": "Current Ratio",
+                            "value": "0.75:1, below the target of 1.5:1",
+                            "trend": "Declining",
+                            "analysis": "The current ratio indicates a liquidity gap of $1,167,774 needed to meet the standard."
+                        },
+                        {
+                            "name": "Owner's Equity Ratio",
+                            "value": "56.1%",
+                            "trend": "Stable",
+                            "analysis": "The equity position is acceptable, but high leverage poses risks."
+                        },
+                        {
+                            "name": "Net Worth",
+                            "value": "$7,322,814, with total assets of $13,054,013",
+                            "trend": "Improving",
+                            "analysis": "Total assets have increased, but liabilities are also rising, indicating a need for careful management."
+                        }
+                    ],
+                    "keyFindings": [
+                        "Negative working capital poses liquidity risks.",
+                        "Current ratio is significantly below target, indicating potential operational challenges."
+                    ]
+                },
+                {
+                    "title": "5 C's of Credit Assessment",
+                    "summary": "Comprehensive credit evaluation using the 5 C's framework",
+                    "creditFactors": [
+                        {
+                            "factor": "Character",
+                            "assessment": "Management has demonstrated operational competence but faces challenges in maintaining profitability.",
+                            "score": "Adequate",
+                            "supportingEvidence": "Management's ability to navigate fluctuating income levels shows resilience."
+                        },
+                        {
+                            "factor": "Capacity",
+                            "assessment": "Cash flow analysis indicates adequate capacity to service debt, but projections show potential declines.",
+                            "score": "Adequate",
+                            "supportingEvidence": "DCR above 1.25:1 indicates capacity, but volatility in cash flow is a concern."
+                        },
+                        {
+                            "factor": "Capital",
+                            "assessment": "Equity position is acceptable, but high leverage and declining working capital are concerning.",
+                            "score": "Adequate",
+                            "supportingEvidence": "Owner's equity ratio of 56.1% is acceptable, but working capital is negative."
+                        },
+                        {
+                            "factor": "Collateral",
+                            "assessment": "Asset quality is strong, with significant real estate and equipment values.",
+                            "score": "Strong",
+                            "supportingEvidence": "Total assets valued at $13,054,013 provide a solid collateral base."
+                        },
+                        {
+                            "factor": "Conditions",
+                            "assessment": "Market conditions are stable, but commodity price volatility poses risks.",
+                            "score": "Neutral",
+                            "supportingEvidence": "Current economic indicators show stability, but agricultural markets are subject to fluctuations."
+                        }
+                    ],
+                    "keyFindings": [
+                        "Overall credit assessment indicates adequate management and operational capacity, but liquidity and profitability challenges remain."
+                    ]
+                },
+                {
+                    "title": "Lending Standards Compliance",
+                    "summary": "Evaluation against agricultural lending benchmarks and regulatory standards",
+                    "complianceMetrics": [
+                        {
+                            "standard": "Current Ratio (1.5:1 target)",
+                            "currentValue": "0.75:1",
+                            "compliance": "Below",
+                            "gapAnalysis": "$1,167,774 needed to meet standard"
+                        },
+                        {
+                            "standard": "Debt Coverage Ratio (1.25:1 minimum)",
+                            "currentValue": "1.47:1",
+                            "compliance": "Meets",
+                            "gapAnalysis": "Above standard by $0.22"
+                        },
+                        {
+                            "standard": "Operating Expense Ratio (65-75% target)",
+                            "currentValue": "75%",
+                            "compliance": "Meets",
+                            "gapAnalysis": "At upper limit of target range"
+                        }
+                    ],
+                    "keyFindings": [
+                        "Compliance with DCR and operating expense ratio, but current ratio is significantly below target."
+                    ]
+                },
+                {
+                    "title": "Credit Recommendations",
+                    "summary": "Comprehensive lending recommendations based on integrated analysis",
+                    "recommendations": [
+                        {
+                            "category": "Liquidity Management",
+                            "recommendation": "Implement strategies to improve working capital and liquidity.",
+                            "priority": "High",
+                            "rationale": "Negative working capital poses significant risks to operational capabilities.",
+                            "timeline": "Immediate"
+                        },
+                        {
+                            "category": "Cost Management",
+                            "recommendation": "Review and optimize operational expenses to improve profitability.",
+                            "priority": "Medium",
+                            "rationale": "High operating expense ratio indicates inefficiencies that need to be addressed.",
+                            "timeline": "Next fiscal year"
+                        },
+                        {
+                            "category": "Debt Restructuring",
+                            "recommendation": "Consider restructuring existing debt to improve cash flow.",
+                            "priority": "Medium",
+                            "rationale": "High levels of accrued interest and liabilities could impact future cash flow.",
+                            "timeline": "Next 6 months"
+                        }
+                    ],
+                    "monitoringRequirements": [
+                        {
+                            "metric": "Working Capital",
+                            "frequency": "Quarterly",
+                            "threshold": "$0",
+                            "action": "Review operational strategies if working capital remains negative."
+                        },
+                        {
+                            "metric": "Current Ratio",
+                            "frequency": "Quarterly",
+                            "threshold": "1.5:1",
+                            "action": "Implement liquidity improvement strategies if below threshold."
+                        }
+                    ],
+                    "keyFindings": [
+                        "Immediate attention is required to address liquidity challenges and improve operational efficiency."
+                    ]
+                }
+            ]
+        };
+
+        function AnalysisDisplay() {
+            const analysis = rawJsonResponse;
+
+            return (
+                <div style={{maxWidth: '1200px', margin: '0 auto'}}>
+                    <h1>Financial Analysis - Raw JSON Display Test</h1>
+                    
+                    {/* Executive Summary */}
+                    <div className="section executive-summary">
+                        <h2>Executive Summary</h2>
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px'}}>
+                            <div>
+                                <h4>Overall Health</h4>
+                                <p>{analysis.executiveSummary.overallHealth}</p>
+                            </div>
+                            <div>
+                                <h4>Credit Grade</h4>
+                                <span className="badge grade-c">Grade {analysis.executiveSummary.creditGrade}</span>
+                            </div>
+                        </div>
+                        
+                        <div style={{marginBottom: '20px'}}>
+                            <h4>Grade Explanation</h4>
+                            <p>{analysis.executiveSummary.gradeExplanation}</p>
+                        </div>
+                        
+                        <div style={{marginBottom: '20px'}}>
+                            <h4>Standards Applied</h4>
+                            <p>{analysis.executiveSummary.standardPrinciples}</p>
+                        </div>
+                        
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px'}}>
+                            <div>
+                                <h4>Key Strengths</h4>
+                                {analysis.executiveSummary.keyStrengths.map((strength, index) => (
+                                    <div key={index} className="finding">
+                                        <div className="bullet green"></div>
+                                        <span>{strength}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div>
+                                <h4>Critical Weaknesses</h4>
+                                {analysis.executiveSummary.criticalWeaknesses.map((weakness, index) => (
+                                    <div key={index} className="finding">
+                                        <div className="bullet red"></div>
+                                        <span>{weakness}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
+                            <div>
+                                <h4>Risk Level</h4>
+                                <span className="badge medium-risk">{analysis.executiveSummary.riskLevel} Risk</span>
+                            </div>
+                            <div>
+                                <h4>Credit Recommendation</h4>
+                                <span className="badge conditional">{analysis.executiveSummary.creditRecommendation}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* All Sections */}
+                    {analysis.sections.map((section, index) => {
+                        const sectionClass = section.title.toLowerCase().replace(/[^a-z]/g, '-');
+                        
+                        return (
+                            <div key={index} className={`section ${sectionClass}`}>
+                                <h2>{section.title}</h2>
+                                <p><strong>Summary:</strong> {section.summary}</p>
+                                
+                                {section.narrative && (
+                                    <div style={{background: 'rgba(255,255,255,0.7)', padding: '15px', borderRadius: '8px', margin: '15px 0'}}>
+                                        <h4>Detailed Analysis</h4>
+                                        <p>{section.narrative}</p>
+                                    </div>
+                                )}
+                                
+                                {section.metrics && section.metrics.length > 0 && (
+                                    <div>
+                                        <h4>Key Metrics</h4>
+                                        {section.metrics.map((metric, metricIndex) => (
+                                            <div key={metricIndex} className="metric">
+                                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                                                    <h5>{metric.name}</h5>
+                                                    <span className={`badge ${metric.trend.toLowerCase()}`}>{metric.trend}</span>
+                                                </div>
+                                                <p><strong>{metric.value}</strong></p>
+                                                <p style={{fontSize: '14px', color: '#666'}}>{metric.analysis}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {section.creditFactors && (
+                                    <div>
+                                        <h4>Credit Factors</h4>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px'}}>
+                                            {section.creditFactors.map((factor, factorIndex) => (
+                                                <div key={factorIndex} style={{background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd'}}>
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                                                        <h5>{factor.factor}</h5>
+                                                        <span className="badge">{factor.score}</span>
+                                                    </div>
+                                                    <p style={{marginBottom: '10px'}}>{factor.assessment}</p>
+                                                    <p style={{fontSize: '12px', color: '#666'}}><strong>Evidence:</strong> {factor.supportingEvidence}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {section.complianceMetrics && (
+                                    <div>
+                                        <h4>Compliance Metrics</h4>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px'}}>
+                                            {section.complianceMetrics.map((metric, metricIndex) => (
+                                                <div key={metricIndex} style={{background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd'}}>
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                                                        <h5 style={{fontSize: '14px'}}>{metric.standard}</h5>
+                                                        <span className="badge">{metric.compliance}</span>
+                                                    </div>
+                                                    <p style={{fontSize: '16px', fontWeight: 'bold', marginBottom: '5px'}}>{metric.currentValue}</p>
+                                                    <p style={{fontSize: '14px', color: '#666'}}>{metric.gapAnalysis}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {section.recommendations && (
+                                    <div>
+                                        <h4>Recommendations</h4>
+                                        {section.recommendations.map((rec, recIndex) => (
+                                            <div key={recIndex} style={{background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', margin: '10px 0'}}>
+                                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                                                    <h5>{rec.category}</h5>
+                                                    <span className="badge">{rec.priority} Priority</span>
+                                                </div>
+                                                <p style={{marginBottom: '5px'}}>{rec.recommendation}</p>
+                                                <p style={{fontSize: '14px', color: '#666', marginBottom: '5px'}}><strong>Rationale:</strong> {rec.rationale}</p>
+                                                <p style={{fontSize: '14px', color: '#666'}}><strong>Timeline:</strong> {rec.timeline}</p>
+                                            </div>
+                                        ))}
+                                        
+                                        {section.monitoringRequirements && (
+                                            <div>
+                                                <h5>Monitoring Requirements</h5>
+                                                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '10px'}}>
+                                                    {section.monitoringRequirements.map((req, reqIndex) => (
+                                                        <div key={reqIndex} style={{background: 'white', padding: '10px', borderRadius: '6px', border: '1px solid #ddd'}}>
+                                                            <h6>{req.metric}</h6>
+                                                            <p style={{fontSize: '12px', margin: '2px 0'}}><strong>Frequency:</strong> {req.frequency}</p>
+                                                            <p style={{fontSize: '12px', margin: '2px 0'}}><strong>Threshold:</strong> {req.threshold}</p>
+                                                            <p style={{fontSize: '12px', margin: '2px 0'}}><strong>Action:</strong> {req.action}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {section.keyFindings && (
+                                    <div>
+                                        <h4>Key Findings</h4>
+                                        {section.keyFindings.map((finding, findingIndex) => (
+                                            <div key={findingIndex} className="finding">
+                                                <div className={`bullet ${section.title === 'Earnings' ? 'green' : section.title === 'Cash' ? 'blue' : section.title === 'Capital' ? 'purple' : section.title.includes('Credit') ? 'orange' : 'blue'}`}></div>
+                                                <span>{finding}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<AnalysisDisplay />, document.getElementById('root'));
+    </script>
+</body>
+</html>
